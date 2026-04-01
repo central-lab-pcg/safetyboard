@@ -663,6 +663,7 @@ function toggleAdmin(){
     document.querySelectorAll('.usec').forEach(e=>e.classList.remove('show'));
     document.getElementById('calpanel').classList.remove('show');
     document.getElementById('addnewsbtn').classList.remove('show');
+    renderMini(); renderHero(); renderKyt(); renderSS();
   } else {
     // show login modal
     document.getElementById('login-pass').value='';
@@ -681,6 +682,7 @@ function doLogin(){
     document.getElementById('calpanel').classList.add('show');
     document.getElementById('addnewsbtn').classList.add('show');
     closeModal('mlogin');
+    renderMini(); renderHero(); renderKyt(); renderSS();
   } else {
     document.getElementById('login-err').style.display='block';
     document.getElementById('login-pass').value='';
@@ -751,18 +753,25 @@ function renderSS(){
   newsData.forEach((n,i)=>{
     const s=document.createElement('div'); s.className='sld'+(i===0?' act':'');
     const bg=TGBG[n.tag]||'#e8f5ed';
+    // ปุ่มลบ — แสดงเฉพาะ Admin Mode
+    const delBtn=adminOn
+      ? `<button onclick="event.stopPropagation();deleteNews(${n.id})" style="position:absolute;top:10px;right:10px;z-index:10;background:#c0392b;border:none;color:#fff;padding:6px 13px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px">🗑 ลบ</button>`
+      : '';
     if(n.pdfUrl){
       s.innerHTML=`<iframe src="${n.pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&page=1&zoom=page-fit" style="width:100%;height:100%;border:none;display:block;position:absolute;inset:0;background:#fff" loading="lazy"></iframe>
-        <div style="position:absolute;top:8px;left:8px;background:rgba(192,57,43,.9);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;z-index:3">📄 PDF</div>
+        <div style="position:absolute;top:10px;left:10px;background:rgba(192,57,43,.9);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;z-index:3">📄 PDF</div>
+        ${delBtn}
         <div class="sld-ov" style="z-index:3"><div class="sld-tag">${TGLBL[n.tag]||n.tag}</div><div class="sld-title">${n.title}</div><div class="sld-date">${n.date}</div></div>`;
     } else if(n.img){
       s.innerHTML=`<img src="${n.img}" class="sld-img" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div class="sld-ph" style="background:${bg};display:none;"><div style="font-size:50px">${TGICO[n.tag]}</div></div>
+        ${delBtn}
         <div class="sld-ov"><div class="sld-tag">${TGLBL[n.tag]||n.tag}</div><div class="sld-title">${n.title}</div><div class="sld-date">${n.date}</div></div>`;
     } else {
       s.innerHTML=`<div class="sld-ph" style="background:${bg};"><div style="font-size:50px">${TGICO[n.tag]||'📰'}</div><div style="font-size:14px;color:#4a6857;font-weight:600;padding:0 36px;text-align:center">${n.title}</div></div>
+        ${delBtn}
         <div class="sld-ov"><div class="sld-tag">${TGLBL[n.tag]||n.tag}</div><div class="sld-title">${n.title}</div><div class="sld-date">${n.date}</div></div>`;
     }
-    s.addEventListener('click',()=>openNewsDetail(n));
+    s.addEventListener('click',()=>{ if(!adminOn) openNewsDetail(n); });
     w.appendChild(s);
   });
   w.innerHTML+=`<button class="sarr sprev" onclick="event.stopPropagation();moveSlide(-1)">&#8249;</button><button class="sarr snext" onclick="event.stopPropagation();moveSlide(1)">&#8250;</button>`;
@@ -783,14 +792,23 @@ setInterval(()=>{if(document.getElementById('tab-news').classList.contains('act'
 // MINI NEWS
 function renderMini(){
   const g=document.getElementById('nmgrid'); g.innerHTML='';
-  newsData.slice(0,6).forEach(n=>{
-    const el=document.createElement('div'); el.className='nmini';
+  newsData.forEach((n,i)=>{
+    const el=document.createElement('div'); el.className='nmini'; el.style.position='relative';
     const hasPDF=n.pdfUrl?`<span class="pdf-badge">📄 PDF</span>`:'';
+    const delBtn=adminOn?`<button onclick="event.stopPropagation();deleteNews(${n.id})" style="position:absolute;top:6px;right:6px;background:#c0392b;border:none;color:#fff;width:22px;height:22px;border-radius:50%;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;z-index:5;padding:0">×</button>`:'';
     el.innerHTML=`<div class="nmimg" style="background:${TGBG[n.tag]||'#e8f5ed'}">${n.img?`<img src="${n.img}" style="width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.parentElement.textContent='${TGICO[n.tag]||'📰'}'">`:TGICO[n.tag]||'📰'}</div>
-    <div style="min-width:0;flex:1"><span class="ntag ${TGCLS[n.tag]||'ts'}">${TGLBL[n.tag]||n.tag}</span><div class="nmtitle">${n.title}${hasPDF}</div><div class="nmdate">${n.date}</div></div>`;
+    <div style="min-width:0;flex:1;padding-right:${adminOn?'20px':'0'}"><span class="ntag ${TGCLS[n.tag]||'ts'}">${TGLBL[n.tag]||n.tag}</span><div class="nmtitle">${n.title}${hasPDF}</div><div class="nmdate">${n.date}</div></div>${delBtn}`;
     el.addEventListener('click',()=>openNewsDetail(n));
     g.appendChild(el);
   });
+}
+
+function deleteNews(id){
+  if(!adminOn) return;
+  if(!confirm('ลบข่าวนี้ออก?')) return;
+  newsData=newsData.filter(n=>n.id!==id);
+  slideIdx=0;
+  renderSS(); renderMini();
 }
 
 // NEWS DETAIL POPUP
@@ -810,22 +828,21 @@ function openNewsDetail(n){
 function renderHero(){
   const disp=document.getElementById('herodisp');
   if(heroImages.length){
-    // Image slideshow mode — A4 ratio
     const k=heroImages[heroImgIdx];
     const navHtml=heroImages.length>1?`
       <button class="hero-sarr hero-sprev" onclick="event.stopPropagation();heroMove(-1)">&#8249;</button>
       <button class="hero-sarr hero-snext" onclick="event.stopPropagation();heroMove(1)">&#8250;</button>
       <div class="hero-dots">${heroImages.map((_,i)=>`<div class="hero-dot${i===heroImgIdx?' act':''}" onclick="heroGoto(${i})"></div>`).join('')}</div>`:''
     ;
+    const delBtn=adminOn?`<button onclick="deleteHeroImg(${heroImgIdx})" style="position:absolute;top:10px;right:10px;background:#c0392b;border:none;color:#fff;padding:4px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;z-index:10;font-family:inherit">🗑 ลบรูปนี้</button>`:'';
     let inner='';
     if(k.isPDF){
       inner=`<iframe src="${k.url}#toolbar=0&navpanes=0&scrollbar=0" style="width:100%;height:100%;border:none;display:block;position:absolute;inset:0" loading="lazy"></iframe>`;
     } else {
       inner=`<img src="${k.url}" style="width:100%;height:100%;object-fit:contain;display:block;position:absolute;inset:0;background:#fff">`;
     }
-    disp.innerHTML=`<div class="hero-ssw">${inner}${navHtml}</div>`;
+    disp.innerHTML=`<div class="hero-ssw">${inner}${navHtml}${delBtn}</div>`;
   } else {
-    // Fallback text card
     const imgHtml=heroData.img?`<div class="hav"><img src="${heroData.img}" onerror="this.outerHTML='⭐'"></div>`:'<div class="hav">⭐</div>';
     disp.innerHTML=`<div class="hero-widget">${imgHtml}<div><div class="hmlbl">⭐ Safety Hero — ${heroData.month}</div><div class="hname">${heroData.name}</div><div class="hreason">${heroData.dept?`<strong>${heroData.dept}</strong> — `:''}${heroData.reason}</div></div></div>`;
   }
@@ -836,6 +853,13 @@ function heroMove(d){
   renderHero();
 }
 function heroGoto(i){heroImgIdx=i;renderHero();}
+function deleteHeroImg(i){
+  if(!adminOn) return;
+  if(!confirm(`ลบรูป Hero ที่ ${i+1} ออก?`)) return;
+  heroImages.splice(i,1);
+  heroImgIdx=Math.min(heroImgIdx, Math.max(0, heroImages.length-1));
+  renderHero();
+}
 
 // KYT IMAGE SLIDESHOW — same height as current news (220px)
 let kytImages=[];
@@ -863,15 +887,23 @@ function renderKyt(){
     <span style="color:#fff;font-size:11px">${kytImgIdx+1} / ${kytImages.length}</span>
     <button class="kyt-nbtn" onclick="kytMove(1)">ถัด →</button>
   </div>`:'';
+  const delBtn=adminOn?`<button onclick="deleteKytImg(${kytImgIdx})" style="position:absolute;top:10px;right:10px;background:#c0392b;border:none;color:#fff;padding:4px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;z-index:10;font-family:inherit">🗑 ลบรูปนี้</button>`:'';
   if(k.isPDF){
-    wrap.innerHTML=`<div class="kyt-img-box" style="min-height:auto"><iframe src="${k.url}#toolbar=0&navpanes=0&scrollbar=0" style="width:100%;height:500px;border:none;display:block"></iframe>${navHtml}</div>`;
+    wrap.innerHTML=`<div class="kyt-img-box" style="min-height:auto;position:relative"><iframe src="${k.url}#toolbar=0&navpanes=0&scrollbar=0" style="width:100%;height:500px;border:none;display:block"></iframe>${navHtml}${delBtn}</div>`;
   } else {
-    wrap.innerHTML=`<div class="kyt-img-box" onclick="openKytFull('${k.url}')"><img src="${k.url}">${navHtml}</div>`;
+    wrap.innerHTML=`<div class="kyt-img-box" style="position:relative" onclick="openKytFull('${k.url}')"><img src="${k.url}">${navHtml}${delBtn}</div>`;
   }
 }
 function kytMove(d){
   if(!kytImages.length) return;
   kytImgIdx=(kytImgIdx+d+kytImages.length)%kytImages.length;
+  renderKyt();
+}
+function deleteKytImg(i){
+  if(!adminOn) return;
+  if(!confirm(`ลบรูป KYT ที่ ${i+1} ออก?`)) return;
+  kytImages.splice(i,1);
+  kytImgIdx=Math.min(kytImgIdx, Math.max(0, kytImages.length-1));
   renderKyt();
 }
 function openKytFull(url){
