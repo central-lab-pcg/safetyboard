@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Safety Board Online — PCG Central Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#1a7a3c;--greenl:#2ea84f;--greenpale:#e8f5ed;--greendim:#d1eeda;--greenbrd:#b2ddc0;
+  --white:#fff;--bg:#f0f4f2;--bg2:#fff;--bg3:#f0f7f3;--text:#1a2e22;--text2:#4a6857;--text3:#8aab97;
+  --brd:#d4e8db;--brd2:#b2d4be;--red:#c0392b;--yel:#c08a00;--blue:#1a5c8a;
+  --r:12px;--rlg:16px;--sh:0 1px 4px rgba(0,0,0,.07),0 4px 12px rgba(26,122,60,.06)
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.6}
+
+/* HEADER */
+.hdr{background:var(--green);position:sticky;top:0;z-index:300;box-shadow:0 2px 12px rgba(0,0,0,.18)}
+.hdri{max-width:960px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.logo-row{display:flex;align-items:center;gap:10px;min-width:0}
+.logo-box{width:38px;height:38px;background:#fff;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:var(--green);flex-shrink:0;letter-spacing:-.3px}
+.hdr-title{font-size:15px;font-weight:700;color:#fff;white-space:nowrap}
+.hdr-sub{font-size:10px;color:rgba(255,255,255,.72);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.clk{text-align:right}
+.clk-t{font-family:'IBM Plex Mono',monospace;font-size:16px;font-weight:600;color:#fff;line-height:1}
+.clk-d{font-size:10px;color:rgba(255,255,255,.72)}
+.abtn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;padding:7px 13px;border-radius:20px;font-size:12px;font-family:'IBM Plex Sans Thai',sans-serif;cursor:pointer;transition:all .2s;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.abtn:hover,.abtn:active{background:rgba(255,255,255,.28)}
+.abtn.on{background:#fff;color:var(--green);font-weight:700}
+
+/* COUNTER STRIP */
+.cstrip{background:var(--greenl);padding:10px 16px;text-align:center}
+.cstripinner{max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+.clbl{font-size:13px;color:#fff;font-weight:500}
+.cnum{font-family:'IBM Plex Mono',monospace;font-size:38px;font-weight:800;color:#fff;line-height:1}
+.cunit{font-size:18px;color:#fff;font-weight:600}
+.csince{font-size:10px;color:rgba(255,255,255,.8)}
+
+/* NAV */
+.nav{background:#fff;border-bottom:2px solid var(--greenbrd);position:sticky;top:58px;z-index:200;box-shadow:0 2px 6px rgba(0,0,0,.05)}
+.navi{max-width:960px;margin:0 auto;display:flex;overflow-x:auto;scrollbar-width:none;padding:0 8px;-webkit-overflow-scrolling:touch}
+.navi::-webkit-scrollbar{display:none}
+.ntab{padding:12px 11px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;transition:all .2s;display:flex;align-items:center;gap:5px;user-select:none;-webkit-tap-highlight-color:transparent;flex-shrink:0}
+.ntab:hover{color:var(--green)}
+.ntab.act{color:var(--green);border-bottom-color:var(--green);font-weight:700}
+
+/* MAIN */
+.main{max-width:960px;margin:0 auto;padding:14px 12px}
+.sec{display:none}
+.sec.act{display:block;animation:fup .25s ease}
+@keyframes fup{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARD */
+.card{background:#fff;border:1px solid var(--brd);border-radius:var(--rlg);padding:16px;margin-bottom:14px;box-shadow:var(--sh)}
+.ctitle{font-size:13px;font-weight:700;color:var(--green);margin-bottom:14px;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.5px}
+.cbar{width:4px;height:16px;background:var(--green);border-radius:2px;flex-shrink:0}
+
+/* NEWS SLIDESHOW — A4 ratio (1:1.414) */
+.ssw{position:relative;border-radius:var(--rlg);overflow:hidden;background:#f5f5f0;margin-bottom:14px;box-shadow:var(--sh);aspect-ratio:1/1.414;width:100%}
+.sld{display:none;position:absolute;inset:0}
+.sld.act{display:block;animation:sfade .5s ease}
+@keyframes sfade{from{opacity:0}to{opacity:1}}
+.sld-img{width:100%;height:100%;object-fit:contain;display:block;background:#fff}
+.sld-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;padding:20px}
+.sld-ov{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.75));padding:40px 16px 14px}
+.sld-tag{display:inline-block;background:var(--greenl);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;margin-bottom:6px}
+.sld-title{font-size:16px;font-weight:700;color:#fff;line-height:1.3;margin-bottom:4px}
+.sld-date{font-size:11px;color:rgba(255,255,255,.75)}
+.sarr{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.28);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;z-index:5}
+.sprev{left:8px}.snext{right:8px}
+.sdots{position:absolute;bottom:10px;right:14px;display:flex;gap:5px;z-index:5}
+.sdot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer;transition:all .2s}
+.sdot.act{background:#fff;width:18px;border-radius:4px}
+
+/* PDF BADGE in news */
+.pdf-badge{display:inline-flex;align-items:center;gap:4px;background:#fdecea;color:#c0392b;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px}
+
+/* HERO SLIDESHOW — A4 ratio */
+.hero-ssw{position:relative;border-radius:var(--rlg);overflow:hidden;background:#f0f4f8;margin-bottom:14px;box-shadow:var(--sh);aspect-ratio:1/1.414;width:100%}
+.hero-sld{display:none;position:absolute;inset:0}
+.hero-sld.act{display:block;animation:sfade .4s ease}
+.hero-sld img{width:100%;height:100%;object-fit:contain;display:block;background:#fff}
+.hero-sld-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:24px;background:linear-gradient(135deg,#1a5c8a,#2874a6)}
+.hero-sarr{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.28);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:5;-webkit-tap-highlight-color:transparent}
+.hero-sprev{left:8px}.hero-snext{right:8px}
+.hero-dots{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:5}
+.hero-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer;transition:all .2s}
+.hero-dot.act{background:#fff;width:18px;border-radius:4px}
+.hero-info-ov{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.72));padding:40px 16px 14px;z-index:4}
+
+/* KYT WIDGET — ความสูงเท่าเดิม (220px ตาม original news) */
+.kyt-img-box{border-radius:var(--rlg);overflow:hidden;box-shadow:var(--sh);position:relative;background:#111;min-height:220px;margin-bottom:14px}
+.kyt-img-box img{width:100%;display:block;object-fit:contain;min-height:220px;cursor:pointer}
+.kyt-img-box iframe{width:100%;height:500px;border:none;display:block}
+.kyt-nav-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(0,0,0,.5);position:absolute;bottom:0;left:0;right:0;z-index:5}
+.kyt-nbtn{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);color:#fff;padding:5px 12px;border-radius:7px;cursor:pointer;font-family:'IBM Plex Sans Thai',sans-serif;font-size:12px;font-weight:600;-webkit-tap-highlight-color:transparent}
+
+/* HERO legacy card (fallback when no hero images) */
+.hero-widget{background:linear-gradient(135deg,#1a5c8a,#2874a6);border-radius:var(--rlg);padding:16px 18px;margin-bottom:14px;display:flex;gap:14px;align-items:center;box-shadow:var(--sh)}
+.hav{width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;border:2px solid rgba(255,255,255,.4);overflow:hidden}
+.hav img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+.hmlbl{font-size:10px;color:rgba(255,255,255,.75);font-weight:700;text-transform:uppercase;letter-spacing:.8px}
+.hname{font-size:18px;font-weight:800;color:#fff;line-height:1.2}
+.hreason{font-size:12px;color:rgba(255,255,255,.85);margin-top:3px}
+
+/* NEWS MINI GRID */
+.nrow{display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:14px}
+@media(min-width:600px){.nrow{grid-template-columns:1fr 1fr}}
+.nmini{background:#fff;border:1px solid var(--brd);border-radius:var(--r);padding:11px 13px;display:flex;gap:11px;align-items:flex-start;cursor:pointer;transition:all .15s;box-shadow:var(--sh);-webkit-tap-highlight-color:transparent}
+.nmini:active{transform:scale(.98)}
+.nmimg{width:58px;height:58px;border-radius:8px;object-fit:cover;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:24px;overflow:hidden}
+.ntag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;display:inline-block;margin-bottom:4px}
+.ts{background:var(--greenpale);color:var(--green)}
+.th{background:#e8f4fd;color:#1a5c8a}
+.te{background:#fef5e4;color:#a07000}
+.ta{background:#fdecea;color:#c0392b}
+.nmtitle{font-size:13px;font-weight:500;line-height:1.4}
+.nmdate{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* STATS */
+.sgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+@media(min-width:500px){.sgrid{grid-template-columns:repeat(4,1fr)}}
+.sc{background:#fff;border:1px solid var(--brd);border-radius:var(--r);padding:12px 14px;box-shadow:var(--sh)}
+.sc.grn{background:var(--green);border-color:var(--green)}
+.slbl{font-size:10px;color:var(--text2);margin-bottom:3px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.sc.grn .slbl{color:rgba(255,255,255,.8)}
+.sval{font-size:26px;font-weight:800;color:var(--green);font-family:'IBM Plex Mono',monospace;line-height:1.1}
+.sc.grn .sval{color:#fff}
+.sval.bl{color:var(--blue)}.sval.rd{color:var(--red)}.sval.yl{color:var(--yel)}
+.sunit{font-size:11px;color:var(--text3);margin-top:1px}
+.sc.grn .sunit{color:rgba(255,255,255,.7)}
+
+/* LINK CARDS */
+.lgrid{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:500px){.lgrid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}}
+.lcard{background:#fff;border:1px solid var(--brd);border-radius:var(--r);padding:13px 15px;display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--text);transition:all .15s;cursor:pointer;box-shadow:var(--sh);-webkit-tap-highlight-color:transparent}
+.lcard:active{transform:scale(.98)}
+.lic{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.lig{background:var(--greenpale)}.lib{background:#e8f4fd}.liy{background:#fef5e4}.lir{background:#fdecea}
+.lname{font-size:13px;font-weight:600}
+.ldesc{font-size:11px;color:var(--text2);margin-top:1px}
+.lbdg{margin-left:auto;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;flex-shrink:0}
+.lbg{background:var(--greenpale);color:var(--green)}
+.lpdf{background:#fdecea;color:#c0392b}
+
+/* CALENDAR */
+.calyear{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:480px){.calyear{grid-template-columns:repeat(2,1fr)}}
+@media(min-width:800px){.calyear{grid-template-columns:repeat(3,1fr)}}
+.calmo{background:#fff;border:1px solid var(--brd);border-radius:var(--r);padding:12px;box-shadow:var(--sh)}
+.calmoh{background:var(--green);color:#fff;text-align:center;padding:7px;border-radius:7px;font-weight:700;font-size:12px;margin-bottom:8px}
+.caldow{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:3px}
+.caldowc{text-align:center;font-size:9px;font-weight:700;color:var(--text3);padding:2px 0}
+.caldays{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cald{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:10px;font-family:'IBM Plex Mono',monospace;border-radius:5px;background:var(--bg3);border:1px solid var(--brd);cursor:pointer;transition:all .12s;user-select:none;color:var(--text2);-webkit-tap-highlight-color:transparent}
+.cald.empty{background:transparent;border-color:transparent;cursor:default}
+.cald.safe{background:#d1eeda;border-color:#a0d4b0;color:#0f5c2c;font-weight:700}
+.cald.incident{background:#fef5e4;border-color:#f0d080;color:#a07000;font-weight:700}
+.cald.lost{background:#fdecea;border-color:#f0b0a8;color:#8b1a14;font-weight:700}
+.cald.today{border:2px solid var(--green)!important;color:var(--green)!important;font-weight:800!important}
+.cald:not(.empty):hover{border-color:var(--green);transform:scale(1.08)}
+.calleg{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;padding:10px 14px;background:#fff;border:1px solid var(--brd);border-radius:var(--r);box-shadow:var(--sh)}
+.clli{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2)}
+.clbox{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+
+/* ADMIN PANEL */
+.apanel{background:var(--greenpale);border:2px dashed var(--greenbrd);border-radius:var(--r);padding:11px 14px;margin-bottom:12px;font-size:13px;color:var(--green);display:none}
+.apanel.show{display:block}
+.ahint{background:#fff;border:1px solid var(--greenbrd);border-radius:7px;padding:9px 12px;margin-top:7px;font-size:12px;color:var(--text2);line-height:1.7}
+.usec{display:none;background:var(--greenpale);border:2px dashed var(--greenbrd);border-radius:var(--rlg);padding:14px 16px;margin-bottom:12px}
+.usec.show{display:block;animation:fup .2s ease}
+.utitle{font-size:13px;font-weight:700;color:var(--green);margin-bottom:10px}
+.ugrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+@media(min-width:500px){.ugrid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}}
+.ubox{background:#fff;border:1px solid var(--brd);border-radius:var(--r);padding:12px;text-align:center;cursor:pointer;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.ubox:active{transform:scale(.97)}
+.uico{font-size:24px;margin-bottom:5px}
+.uname{font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px}
+.udesc{font-size:10px;color:var(--text2)}
+.ubox input{display:none}
+.ust{margin-top:5px;font-size:10px;color:var(--green);font-weight:600}
+
+/* BAR CHART */
+.brow{margin-bottom:7px}
+.blrow{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:2px}
+.bv{color:var(--green);font-weight:700}
+.btrack{background:var(--bg3);border-radius:4px;height:7px;overflow:hidden;border:1px solid var(--brd)}
+.bfill{height:100%;background:var(--green);border-radius:4px;transition:width .7s ease}
+
+/* TWO COL */
+.twocol{display:grid;grid-template-columns:1fr;gap:14px}
+@media(min-width:700px){.twocol{grid-template-columns:1fr 1fr}}
+
+/* IFRAME WRAPPER */
+.ifrwrap{background:#fff;border:1px solid var(--brd);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh)}
+.ifrbar{background:var(--green);padding:7px 13px;display:flex;align-items:center;gap:7px;font-size:12px;color:#fff;font-weight:500}
+.idot{width:7px;height:7px;border-radius:50%}
+
+/* PLACEHOLDER */
+.ph{background:var(--bg3);border:2px dashed var(--greenbrd);border-radius:var(--rlg);padding:32px;text-align:center}
+.phic{font-size:44px;margin-bottom:10px}
+.phtit{font-size:15px;font-weight:700;color:var(--text);margin-bottom:5px}
+.phdesc{font-size:12px;color:var(--text2)}
+
+/* MODAL */
+.movl{display:none;position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:500;align-items:flex-end;justify-content:center}
+@media(min-width:600px){.movl{align-items:center}}
+.movl.show{display:flex}
+.mbox{background:#fff;border-radius:var(--rlg) var(--rlg) 0 0;padding:20px;width:100%;max-width:480px;box-shadow:0 -4px 30px rgba(0,0,0,.18);max-height:92vh;overflow-y:auto}
+@media(min-width:600px){.mbox{border-radius:var(--rlg);max-height:85vh}}
+.mbox-handle{width:36px;height:4px;background:var(--brd2);border-radius:2px;margin:0 auto 14px}
+@media(min-width:600px){.mbox-handle{display:none}}
+.mtit{font-size:15px;font-weight:700;color:var(--green);margin-bottom:14px}
+.mfield{margin-bottom:11px}
+.mlbl{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:4px;display:block}
+.minp{width:100%;padding:10px 12px;border:1px solid var(--brd2);border-radius:8px;font-family:'IBM Plex Sans Thai',sans-serif;font-size:14px;color:var(--text);background:#fff;outline:none;transition:border-color .2s;-webkit-appearance:none}
+.minp:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(26,122,60,.1)}
+.mbtns{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.bcancel{padding:9px 18px;border:1px solid var(--brd2);border-radius:8px;background:var(--bg3);color:var(--text2);cursor:pointer;font-family:'IBM Plex Sans Thai',sans-serif;font-size:13px;-webkit-tap-highlight-color:transparent}
+.bsave{padding:9px 20px;background:var(--green);border:none;border-radius:8px;color:#fff;cursor:pointer;font-family:'IBM Plex Sans Thai',sans-serif;font-size:13px;font-weight:700;-webkit-tap-highlight-color:transparent}
+.addbtn{background:var(--green);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-family:'IBM Plex Sans Thai',sans-serif;font-size:12px;font-weight:600;cursor:pointer;display:none;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent}
+.addbtn.show{display:inline-flex}
+
+/* PDF upload zone in modal */
+.pdf-upload-zone{border:2px dashed var(--brd2);border-radius:10px;padding:18px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;background:var(--bg3)}
+.pdf-upload-zone:hover,.pdf-upload-zone.has-file{border-color:var(--green);background:var(--greenpale)}
+.pdf-upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.pdf-upload-zone .pz-ico{font-size:28px;margin-bottom:6px}
+.pdf-upload-zone .pz-txt{font-size:12px;color:var(--text2)}
+.pdf-upload-zone .pz-name{font-size:12px;font-weight:600;color:var(--green);margin-top:4px;display:none}
+
+/* IMG preview */
+.img-preview{width:100%;height:140px;object-fit:cover;border-radius:8px;margin-top:8px;display:none;border:1px solid var(--brd)}
+
+/* NEWS DETAIL MODAL */
+.news-detail-title{font-size:17px;font-weight:700;color:var(--text);margin-bottom:8px;line-height:1.4}
+.news-detail-body{font-size:14px;color:var(--text2);line-height:1.8;margin-bottom:10px}
+#news-detail-pdf{margin-top:10px}
+
+/* SECTION LABEL */
+.sec-lbl{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:9px;margin-top:16px;padding:0 2px}
+
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg3)}
+::-webkit-scrollbar-thumb{background:var(--greenbrd);border-radius:3px}
+
+/* Safe area for iOS */
+@supports(padding-bottom:env(safe-area-inset-bottom)){
+  .nav{padding-bottom:env(safe-area-inset-bottom)}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdri">
+    <div class="logo-row">
+      <div class="logo-box">PCG</div>
+      <div><div class="hdr-title">🛡️ Safety Board</div><div class="hdr-sub">PCG Central Lab</div></div>
+    </div>
+    <div class="hdr-right">
+      <div class="clk"><div class="clk-t" id="clock"></div><div class="clk-d" id="cdate"></div></div>
+      <button class="abtn" id="atoggle" onclick="toggleAdmin()">🔐 Admin</button>
+    </div>
+  </div>
+</div>
+
+<!-- COUNTER -->
+<div class="cstrip">
+  <div class="cstripinner">
+    <div class="clbl">✅ ปลอดอุบัติเหตุมาแล้ว</div>
+    <div class="cnum" id="daycount">0</div>
+    <div class="cunit">วัน</div>
+    <div class="csince">นับตั้งแต่ 1 มกราคม 2569</div>
+  </div>
+</div>
+
+<!-- NAV TABS -->
+<div class="nav">
+  <div class="navi">
+    <div class="ntab act" data-tab="news">📰 ข่าวสาร</div>
+    <div class="ntab" data-tab="calendar">📆 ปฏิทิน</div>
+    <div class="ntab" data-tab="policy">📋 นโยบาย</div>
+    <div class="ntab" data-tab="kpi">🎯 KPI</div>
+    <div class="ntab" data-tab="plan">📅 แผนงาน</div>
+    <div class="ntab" data-tab="report">📊 รายงาน</div>
+    <div class="ntab" data-tab="audit">🔍 ผลตรวจ</div>
+    <div class="ntab" data-tab="ncr">⚠️ NCR</div>
+    <div class="ntab" data-tab="kaizen">💡 Kaizen</div>
+    <div class="ntab" data-tab="culture">🏅 วัฒนธรรม</div>
+    <div class="ntab" data-tab="upload">📤 Admin Upload</div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ══ ข่าวสาร ══ -->
+<div class="sec act" id="tab-news">
+
+  <!-- ADMIN BAR -->
+  <div id="unews" class="usec">
+    <div class="utitle">➕ จัดการข่าวสาร (Admin)</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="bsave" onclick="openModal('mnews')">+ เพิ่มข่าวใหม่</button>
+    </div>
+    <div class="ahint" style="margin-top:8px;">เพิ่มข่าวสารได้ทั้งแบบ URL รูปภาพ และ <strong>อัปโหลด PDF</strong> โดยตรง</div>
+  </div>
+
+  <!-- SLIDESHOW -->
+  <div class="ssw" id="ssw">
+    <div class="sld act"><div class="sld-ph" style="background:#e8f5ed"><div style="font-size:44px">📰</div><div style="font-size:13px;color:#4a6857;font-weight:600;text-align:center">ยังไม่มีข่าวสาร<br><span style="font-size:11px;font-weight:400">เปิด Admin แล้วเพิ่มข่าวได้เลย</span></div></div></div>
+  </div>
+
+  <!-- SAFETY HERO WIDGET — อยู่ก่อน KYT -->
+  <div class="sec-lbl">⭐ Safety Hero ประจำเดือน</div>
+  <div id="uhero" class="usec" style="margin-bottom:8px">
+    <div class="utitle">Admin — อัปโหลดรูป Safety Hero</div>
+    <div class="ahint">อัปโหลดรูปภาพ Hero (JPG, PNG) ได้หลายรูป — แสดงเป็น Slideshow ขนาด A4</div>
+    <div style="margin-top:10px">
+      <label class="bsave" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+        🖼 เลือกรูป Hero
+        <input type="file" accept="image/*,.pdf" multiple style="display:none" onchange="handleHeroImages(event)">
+      </label>
+      <button class="bsave" style="margin-left:8px;background:var(--blue);border-color:var(--blue)" onclick="openModal('mhero')">✏️ แก้ข้อมูล Hero</button>
+    </div>
+  </div>
+  <div id="herodisp"></div>
+
+  <!-- KYT IMAGE WIDGET -->
+  <div class="sec-lbl" style="margin-top:4px">👁️ KYT ประจำสัปดาห์</div>
+  <div id="ukyt" class="usec" style="margin-bottom:8px">
+    <div class="utitle">Admin — อัปโหลดรูป KYT ประจำสัปดาห์</div>
+    <div class="ahint">อัปโหลดรูปภาพ KYT (JPG, PNG, PDF) — แสดงเป็น Slideshow</div>
+    <div style="margin-top:10px">
+      <label class="bsave" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+        🖼 เลือกรูป KYT
+        <input type="file" accept="image/*,.pdf" multiple style="display:none" onchange="handleKytImages(event)">
+      </label>
+    </div>
+  </div>
+  <div id="kyt-img-wrap">
+    <div class="ph" style="padding:24px"><div class="phic">👁️</div><div class="phtit" style="font-size:14px">KYT ประจำสัปดาห์</div><div class="phdesc">Admin อัปโหลดรูปภาพ KYT ได้เลย</div></div>
+  </div>
+
+  <!-- NEWS LIST -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;margin-top:4px">
+    <div class="sec-lbl" style="margin:0">📰 ข่าวสารล่าสุด</div>
+    <button class="addbtn" id="addnewsbtn" onclick="openModal('mnews')">+ เพิ่มข่าว</button>
+  </div>
+  <div class="nrow" id="nmgrid"></div>
+</div>
+
+<!-- ══ ปฏิทิน ══ -->
+<div class="sec" id="tab-calendar">
+  <div class="apanel" id="calpanel">
+    <strong>🔧 Admin Mode เปิดอยู่</strong> — คลิกวันในปฏิทินเพื่อเปลี่ยนสถานะ
+    <div class="ahint">คลิก 1 = ✅ ปลอดภัย &nbsp;|&nbsp; คลิก 2 = ⚠️ อุบัติเหตุเล็กน้อย &nbsp;|&nbsp; คลิก 3 = 🔴 หยุดงาน &nbsp;|&nbsp; คลิก 4 = ล้างค่า</div>
+  </div>
+  <div class="calleg">
+    <div class="clli"><div class="clbox" style="background:#d1eeda;border:1px solid #a0d4b0"></div>ปลอดอุบัติเหตุ</div>
+    <div class="clli"><div class="clbox" style="background:#fef5e4;border:1px solid #f0d080"></div>เหตุเล็กน้อย</div>
+    <div class="clli"><div class="clbox" style="background:#fdecea;border:1px solid #f0b0a8"></div>หยุดงาน</div>
+    <div class="clli"><div class="clbox" style="background:var(--bg3);border:1px solid var(--brd)"></div>ยังไม่มีข้อมูล</div>
+  </div>
+  <div class="calyear" id="fullcal"></div>
+</div>
+
+<!-- ══ นโยบาย ══ -->
+<div class="sec" id="tab-policy">
+  <div class="sgrid">
+    <div class="sc grn"><div class="slbl">อุบัติเหตุ ม.ค. 2569</div><div class="sval">0</div><div class="sunit">Zero Accident ✅</div></div>
+    <div class="sc"><div class="slbl">IFR</div><div class="sval bl">0.0</div><div class="sunit">per million hrs</div></div>
+    <div class="sc"><div class="slbl">ISR</div><div class="sval bl">0.0</div><div class="sunit">per million hrs</div></div>
+    <div class="sc"><div class="slbl">ห้องพยาบาล ม.ค.</div><div class="sval yl">441</div><div class="sunit">ครั้ง</div></div>
+  </div>
+  <div class="card">
+    <div class="ctitle"><span class="cbar"></span>เอกสารนโยบาย</div>
+    <div class="lgrid">
+      <a class="lcard" href="https://storage.me-qr.com/pdf/74b10ace-6b10-4050-8090-d9d335c29f0b.pdf" target="_blank">
+        <div class="lic lig">🛡️</div><div><div class="lname">นโยบายความปลอดภัย</div><div class="ldesc">Safety Policy</div></div>
+        <span class="lbdg lpdf">PDF</span>
+      </a>
+      <a class="lcard" href="https://storage.me-qr.com/pdf/25af5d9d-6b56-458e-862a-dad39bd46ba2.pdf" target="_blank">
+        <div class="lic lig">🌿</div><div><div class="lname">นโยบายด้านสิ่งแวดล้อม</div><div class="ldesc">Environment Policy</div></div>
+        <span class="lbdg lpdf">PDF</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- ══ KPI ══ -->
+<div class="sec" id="tab-kpi">
+  <div id="ukpi" class="usec"><div class="utitle">📤 Admin — อัปโหลด KPI</div>
+    <label class="ubox" style="display:inline-block;cursor:pointer;"><div class="uico">📎</div><div class="uname">เลือกไฟล์ PDF KPI</div><input type="file" accept=".pdf" onchange="loadFile(this,'kpiframe')"></label></div>
+  <div class="card"><div class="ctitle"><span class="cbar"></span>เป้าหมาย KPI ด้านความปลอดภัย</div>
+    <div id="kpiframe"><div class="ph"><div class="phic">🎯</div><div class="phtit">รอไฟล์ PDF KPI</div><div class="phdesc">เปิด Admin Mode แล้วอัปโหลด</div></div></div></div>
+</div>
+
+<!-- ══ แผนงาน ══ -->
+<div class="sec" id="tab-plan">
+  <div class="card"><div class="ctitle"><span class="cbar"></span>แผนงานด้านความปลอดภัย</div>
+    <div class="lgrid" style="margin-bottom:14px;">
+      <a class="lcard" href="https://storage2.me-qr.com/pdf/879453ab-fd44-4ed4-a82d-e4b094848a22.pdf" target="_blank">
+        <div class="lic lig">📄</div><div><div class="lname">แผนงาน (PDF)</div></div><span class="lbdg lpdf">PDF</span></a>
+      <a class="lcard" href="https://view.officeapps.live.com/op/view.aspx?src=https%3A%2F%2Fstorage2.me-qr.com%2Fexcel%2F9d00e368-878b-45e8-84c4-e7f45605d600.xlsx" target="_blank">
+        <div class="lic lig">📊</div><div><div class="lname">แผนงาน (Excel)</div></div><span class="lbdg lbg">Excel</span></a>
+    </div>
+    <div class="ifrwrap"><div class="ifrbar"><div class="idot" style="background:#ff5f57"></div><div class="idot" style="background:#febc2e"></div><div class="idot" style="background:#28c840"></div><span style="margin-left:6px;">Safety Work Plan 2569</span></div>
+      <iframe src="https://storage2.me-qr.com/pdf/879453ab-fd44-4ed4-a82d-e4b094848a22.pdf" style="width:100%;height:480px;border:none;display:block;"></iframe></div>
+  </div>
+</div>
+
+<!-- ══ รายงาน ══ -->
+<div class="sec" id="tab-report">
+  <div class="twocol">
+    <div>
+      <div class="card"><div class="ctitle"><span class="cbar"></span>รายงาน คปอ. 2/2569</div>
+        <div class="sgrid">
+          <div class="sc grn"><div class="slbl">อุบัติเหตุ ม.ค.</div><div class="sval">0</div><div class="sunit">Zero ✅</div></div>
+          <div class="sc"><div class="slbl">กรรมการ</div><div class="sval bl">29</div><div class="sunit">คน</div></div>
+        </div>
+        <div style="background:var(--greenpale);border-radius:var(--r);padding:11px;margin-bottom:11px;font-size:12px;line-height:1.9;">✅ IFR/ISR/LTIFR = 0.0<br>✅ KPI Safety: Zero Accident<br>✅ น้ำเสีย BOD/TSS/Oil &amp; Grease อยู่ในมาตรฐาน<br>⚡ ติดตามอุปกรณ์ AED</div>
+        <div id="ucpo" class="usec" style="margin-bottom:0"><label style="cursor:pointer;font-size:12px;font-weight:600;color:var(--green);">📎 อัปโหลด PDF รายงาน คปอ.<input type="file" accept=".pdf" style="display:none" onchange="loadFile(this,'cpoframe')"></label></div>
+        <div id="cpoframe"></div>
+      </div>
+    </div>
+    <div>
+      <div class="card"><div class="ctitle"><span class="cbar" style="background:var(--blue)"></span>สถิติห้องพยาบาล ม.ค. 2569</div>
+        <div class="sgrid">
+          <div class="sc grn"><div class="slbl">รวมบริการ</div><div class="sval">441</div></div>
+          <div class="sc"><div class="slbl">ใบส่งตัว</div><div class="sval bl">205</div></div>
+          <div class="sc"><div class="slbl">ชาย/หญิง</div><div class="sval" style="font-size:16px;color:var(--text)">221/220</div></div>
+          <div class="sc"><div class="slbl">ท้องเสีย</div><div class="sval yl">4</div></div>
+        </div>
+        <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:7px;text-transform:uppercase;letter-spacing:.4px;">5 อันดับระบบโรค</div>
+        <div id="dischart"></div>
+        <div id="unurse" class="usec" style="margin-top:10px;margin-bottom:0"><label style="cursor:pointer;font-size:12px;font-weight:600;color:var(--green);">📎 อัปโหลด PDF สถิติพยาบาล<input type="file" accept=".pdf" style="display:none" onchange="loadFile(this,'nurseframe')"></label></div>
+        <div id="nurseframe"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ผลตรวจ ══ -->
+<div class="sec" id="tab-audit">
+  <div id="uaudit" class="usec"><div class="utitle">📤 Admin — อัปโหลดผลตรวจ</div>
+    <label class="ubox" style="display:inline-block;cursor:pointer;"><div class="uico">🔍</div><div class="uname">เลือกไฟล์ PDF</div><input type="file" accept=".pdf" onchange="loadFile(this,'auditframe')"></label></div>
+  <div class="card"><div class="ctitle"><span class="cbar" style="background:var(--yel)"></span>ผลตรวจประเมินพื้นที่โดย คปอ.</div>
+    <div id="auditframe"><div class="ph"><div class="phic">🔍</div><div class="phtit">รอไฟล์ผลตรวจประเมิน</div></div></div></div>
+</div>
+
+<!-- ══ NCR ══ -->
+<div class="sec" id="tab-ncr">
+  <div id="uncr" class="usec"><div class="utitle">📤 Admin — อัปโหลด NCR</div>
+    <label class="ubox" style="display:inline-block;cursor:pointer;"><div class="uico">⚠️</div><div class="uname">เลือกไฟล์ PDF</div><input type="file" accept=".pdf" onchange="loadFile(this,'ncrframe')"></label></div>
+  <div class="card"><div class="ctitle"><span class="cbar" style="background:var(--red)"></span>รายงานสิ่งผิดปกติ</div>
+    <div id="ncrframe"><div class="ph"><div class="phic">⚠️</div><div class="phtit">รอไฟล์รายงานผิดปกติ</div></div></div></div>
+</div>
+
+<!-- ══ Kaizen ══ -->
+<div class="sec" id="tab-kaizen">
+  <div id="ukaizen" class="usec"><div class="utitle">📤 Admin — อัปโหลด Kaizen</div>
+    <label class="ubox" style="display:inline-block;cursor:pointer;"><div class="uico">💡</div><div class="uname">เลือกไฟล์ PDF</div><input type="file" accept=".pdf" onchange="loadFile(this,'kaizenframe')"></label></div>
+  <div class="card"><div class="ctitle"><span class="cbar" style="background:var(--yel)"></span>Kaizen / ข้อเสนอแนะ</div>
+    <div id="kaizenframe"><div class="ph"><div class="phic">💡</div><div class="phtit">รอไฟล์ Kaizen</div></div></div></div>
+</div>
+
+<!-- ══ วัฒนธรรม ══ -->
+<div class="sec" id="tab-culture">
+  <div id="uculture" class="usec"><div class="utitle">📤 Admin — อัปโหลดวัฒนธรรม PCG</div>
+    <label class="ubox" style="display:inline-block;cursor:pointer;"><div class="uico">🏅</div><div class="uname">เลือกไฟล์ PDF</div><input type="file" accept=".pdf" onchange="loadFile(this,'cultureframe')"></label></div>
+  <div class="card"><div class="ctitle"><span class="cbar" style="background:#7c3aed"></span>วัฒนธรรมความปลอดภัยในหัวใจ PCG</div>
+    <div id="cultureframe"><div class="ph"><div class="phic">🏅</div><div class="phtit">รอไฟล์วัฒนธรรม</div></div></div></div>
+</div>
+
+<!-- ══ Admin Upload Hub ══ -->
+<div class="sec" id="tab-upload">
+  <div class="card"><div class="ctitle"><span class="cbar"></span>ศูนย์กลางอัปโหลดเอกสาร (Admin)</div>
+    <div style="background:var(--greenpale);border-radius:var(--r);padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--green);line-height:1.9">
+      <strong>วิธีใช้งาน:</strong> กด 🔐 Admin ก่อน → คลิกกล่องด้านล่างเพื่อเลือกไฟล์ PDF<br>
+      <strong>⚠️</strong> ข้อมูลอยู่ในหน่วยความจำชั่วคราว — รีเฟรชหน้าจอจะหาย
+    </div>
+    <div class="ugrid">
+      <div class="ubox" onclick="document.getElementById('uu-kpi').click()"><div class="uico">🎯</div><div class="uname">KPI</div><div class="udesc">PDF เป้าหมาย</div><input id="uu-kpi" type="file" accept=".pdf" onchange="loadFile(this,'kpiframe');setst('st-kpi',this)"><div class="ust" id="st-kpi"></div></div>
+      <div class="ubox" onclick="document.getElementById('uu-cpo').click()"><div class="uico">📊</div><div class="uname">รายงาน คปอ.</div><div class="udesc">PDF รายงานประชุม</div><input id="uu-cpo" type="file" accept=".pdf" onchange="loadFile(this,'cpoframe');setst('st-cpo',this)"><div class="ust" id="st-cpo"></div></div>
+      <div class="ubox" onclick="document.getElementById('uu-nurse').click()"><div class="uico">🏥</div><div class="uname">สถิติพยาบาล</div><div class="udesc">PDF สถิติ</div><input id="uu-nurse" type="file" accept=".pdf" onchange="loadFile(this,'nurseframe');setst('st-nurse',this)"><div class="ust" id="st-nurse"></div></div>
+      <div class="ubox" onclick="document.getElementById('uu-audit').click()"><div class="uico">🔍</div><div class="uname">ผลตรวจประเมิน</div><div class="udesc">PDF กราฟผลตรวจ</div><input id="uu-audit" type="file" accept=".pdf" onchange="loadFile(this,'auditframe');setst('st-audit',this)"><div class="ust" id="st-audit"></div></div>
+      <div class="ubox" onclick="document.getElementById('uu-ncr').click()"><div class="uico">⚠️</div><div class="uname">รายงาน NCR</div><div class="udesc">PDF รายงานผิดปกติ</div><input id="uu-ncr" type="file" accept=".pdf" onchange="loadFile(this,'ncrframe');setst('st-ncr',this)"><div class="ust" id="st-ncr"></div></div>
+      <div class="ubox" onclick="document.getElementById('uu-kaizen').click()"><div class="uico">💡</div><div class="uname">Kaizen</div><div class="udesc">PDF ข้อเสนอแนะ</div><input id="uu-kaizen" type="file" accept=".pdf" onchange="loadFile(this,'kaizenframe');setst('st-kaizen',this)"><div class="ust" id="st-kaizen"></div></div>
+      <div class="ubox" onclick="document.getElementById('uu-culture').click()"><div class="uico">🏅</div><div class="uname">วัฒนธรรม PCG</div><div class="udesc">PDF วัฒนธรรม</div><input id="uu-culture" type="file" accept=".pdf" onchange="loadFile(this,'cultureframe');setst('st-culture',this)"><div class="ust" id="st-culture"></div></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- ══ MODALS ══ -->
+
+<!-- ADD NEWS MODAL -->
+<div class="movl" id="mnews">
+  <div class="mbox">
+    <div class="mbox-handle"></div>
+    <div class="mtit">➕ เพิ่มข่าวสาร</div>
+    <div class="mfield"><label class="mlbl">หัวข้อข่าว *</label><input class="minp" id="ntitle" placeholder="กรอกหัวข้อข่าว"></div>
+    <div class="mfield"><label class="mlbl">รายละเอียด</label><textarea class="minp" id="ndetail" rows="2" placeholder="รายละเอียดเพิ่มเติม"></textarea></div>
+    <div class="mfield"><label class="mlbl">วันที่</label><input class="minp" id="ndate" type="date"></div>
+    <div class="mfield"><label class="mlbl">หมวดหมู่</label>
+      <select class="minp" id="ntag">
+        <option value="safety">ความปลอดภัย</option>
+        <option value="health">สุขภาพ</option>
+        <option value="event">กิจกรรม</option>
+        <option value="alert">แจ้งเตือน</option>
+      </select>
+    </div>
+    <div class="mfield">
+      <label class="mlbl">อัปโหลดไฟล์ PDF (ข่าวสาร/สาระน่ารู้)</label>
+      <div class="pdf-upload-zone" id="pz-news" onclick="document.getElementById('npdf-inp').click()">
+        <input type="file" id="npdf-inp" accept=".pdf,image/*" style="display:none" onchange="handleNewsFile(event)">
+        <div class="pz-ico">📄</div>
+        <div class="pz-txt">แตะเพื่อเลือกไฟล์ PDF หรือรูปภาพ</div>
+        <div class="pz-name" id="pz-news-name"></div>
+      </div>
+      <img id="news-img-preview" class="img-preview">
+    </div>
+    <div class="mfield"><label class="mlbl">หรือ URL รูปภาพ (ไม่บังคับ)</label><input class="minp" id="nimg" placeholder="https://..." oninput="previewUrl(this.value)"></div>
+    <div class="mbtns"><button class="bcancel" onclick="closeModal('mnews')">ยกเลิก</button><button class="bsave" onclick="saveNews()">💾 บันทึก</button></div>
+  </div>
+</div>
+
+<!-- KYT FULL IMAGE LIGHTBOX -->
+<div class="movl" id="mkytfull" style="background:rgba(0,0,0,.85);align-items:center">
+  <div style="position:relative;width:95%;max-width:640px;max-height:90vh;display:flex;flex-direction:column;align-items:center">
+    <button onclick="closeModal('mkytfull')" style="position:absolute;top:-36px;right:0;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10">✕</button>
+    <img id="kyt-full-img" src="" style="max-width:100%;max-height:85vh;border-radius:12px;display:block;object-fit:contain">
+  </div>
+</div>
+
+<!-- HERO MODAL -->
+<div class="movl" id="mhero">
+  <div class="mbox">
+    <div class="mbox-handle"></div>
+    <div class="mtit">⭐ อัปเดต Safety Hero</div>
+    <div class="mfield"><label class="mlbl">เดือน/ปี</label><input class="minp" id="hmonth" placeholder="เมษายน 2569"></div>
+    <div class="mfield"><label class="mlbl">ชื่อ-นามสกุล *</label><input class="minp" id="hname" placeholder="ชื่อพนักงาน"></div>
+    <div class="mfield"><label class="mlbl">แผนก</label><input class="minp" id="hdept" placeholder="แผนก"></div>
+    <div class="mfield"><label class="mlbl">เหตุผล</label><textarea class="minp" id="hreason" rows="2" placeholder="เหตุผลที่ได้รับรางวัล"></textarea></div>
+    <div class="mfield">
+      <label class="mlbl">อัปโหลดรูปภาพ Hero</label>
+      <div class="pdf-upload-zone" id="pz-hero" onclick="document.getElementById('nhero-img').click()">
+        <input type="file" id="nhero-img" accept="image/*" style="display:none" onchange="handleHeroImg(event)">
+        <div class="pz-ico">🖼️</div>
+        <div class="pz-txt">แตะเพื่อเลือกรูปภาพ</div>
+        <div class="pz-name" id="pz-hero-name"></div>
+      </div>
+      <img id="hero-img-preview" class="img-preview">
+    </div>
+    <div class="mfield"><label class="mlbl">หรือ URL รูปภาพ</label><input class="minp" id="himg" placeholder="https://..."></div>
+    <div class="mbtns"><button class="bcancel" onclick="closeModal('mhero')">ยกเลิก</button><button class="bsave" onclick="saveHero()">💾 บันทึก</button></div>
+  </div>
+</div>
+
+<!-- NEWS DETAIL MODAL -->
+<div class="movl" id="mnewsdetail">
+  <div class="mbox" style="max-width:560px">
+    <div class="mbox-handle"></div>
+    <div id="detail-tag" style="margin-bottom:8px"></div>
+    <div class="news-detail-title" id="detail-title"></div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:12px" id="detail-date"></div>
+    <div class="news-detail-body" id="detail-body"></div>
+    <div id="news-detail-pdf"></div>
+    <div class="mbtns"><button class="bcancel" onclick="closeModal('mnewsdetail')">ปิด</button></div>
+  </div>
+</div>
+
+<!-- LOGIN MODAL -->
+<div class="movl" id="mlogin">
+  <div class="mbox" style="max-width:340px">
+    <div class="mbox-handle"></div>
+    <div style="text-align:center;margin-bottom:16px">
+      <div style="font-size:36px;margin-bottom:6px">🔐</div>
+      <div class="mtit" style="margin-bottom:4px">Admin Login</div>
+      <div style="font-size:12px;color:var(--text3)">กรุณากรอกรหัสผ่านเพื่อเข้าสู่โหมด Admin</div>
+    </div>
+    <div class="mfield">
+      <label class="mlbl">รหัสผ่าน</label>
+      <input class="minp" id="login-pass" type="password" placeholder="••••••••••"
+        onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div id="login-err" style="display:none;color:var(--red);font-size:12px;margin-bottom:8px;padding:8px 12px;background:#fdecea;border-radius:7px">
+      ❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่
+    </div>
+    <div class="mbtns">
+      <button class="bcancel" onclick="closeModal('mlogin')">ยกเลิก</button>
+      <button class="bsave" onclick="doLogin()">🔓 เข้าสู่ระบบ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const MTHAI=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+const MSHORT=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const TGLBL={safety:'ความปลอดภัย',health:'สุขภาพ',event:'กิจกรรม',alert:'แจ้งเตือน'};
+const TGCLS={safety:'ts',health:'th',event:'te',alert:'ta'};
+const TGICO={safety:'🛡️',health:'🏥',event:'📅',alert:'⚠️'};
+const TGBG={safety:'#e8f5ed',health:'#e8f4fd',event:'#fef5e4',alert:'#fdecea'};
+
+let adminOn=false, slideIdx=0, kytIdx=0;
+const START=new Date('2026-01-01');
+let calData={};
+for(let d=1;d<=31;d++) calData[`2026-1-${d}`]='safe';
+
+// temp file blobs for news
+let newsFilePending=null; // {type:'pdf'|'img', url, name}
+let heroImgPending=null;
+
+let newsData=[];
+let kytData=[];
+let heroData={month:'เมษายน 2569',name:'— รอประกาศ —',dept:'',reason:'Safety Hero ประจำเดือนจะประกาศเร็วๆ นี้',img:''};
+
+// CLOCK
+function tick(){
+  const n=new Date(),p=x=>String(x).padStart(2,'0');
+  document.getElementById('clock').textContent=`${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())}`;
+  const dw=['อาทิตย์','จันทร์','อังคาร','พุธ','พฤหัสบดี','ศุกร์','เสาร์'];
+  document.getElementById('cdate').textContent=`${dw[n.getDay()]} ${n.getDate()} ${MSHORT[n.getMonth()]} ${n.getFullYear()+543}`;
+}
+setInterval(tick,1000); tick();
+
+// COUNTER
+function calcDays(){
+  const t=new Date(); t.setHours(0,0,0,0);
+  let s=0;
+  for(let d=new Date(t);d>=START;d.setDate(d.getDate()-1)){
+    const k=`${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+    if(!calData[k]||calData[k]==='safe') s++; else break;
+  }
+  document.getElementById('daycount').textContent=s;
+}
+calcDays();
+
+// TABS
+function showTab(id){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('act'));
+  document.querySelectorAll('.ntab').forEach(t=>t.classList.remove('act'));
+  document.getElementById('tab-'+id).classList.add('act');
+  document.querySelector(`[data-tab="${id}"]`).classList.add('act');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('.ntab').forEach(t=>t.addEventListener('click',()=>showTab(t.dataset.tab)));
+
+// ADMIN — password gated
+function toggleAdmin(){
+  if(adminOn){
+    // logout
+    adminOn=false;
+    const b=document.getElementById('atoggle');
+    b.textContent='🔐 Admin'; b.classList.remove('on');
+    document.querySelectorAll('.usec').forEach(e=>e.classList.remove('show'));
+    document.getElementById('calpanel').classList.remove('show');
+    document.getElementById('addnewsbtn').classList.remove('show');
+  } else {
+    // show login modal
+    document.getElementById('login-pass').value='';
+    document.getElementById('login-err').style.display='none';
+    openModal('mlogin');
+    setTimeout(()=>document.getElementById('login-pass').focus(),300);
+  }
+}
+function doLogin(){
+  const pw=document.getElementById('login-pass').value;
+  if(pw==='lab@pcg169'){
+    adminOn=true;
+    const b=document.getElementById('atoggle');
+    b.textContent='✅ Admin ON'; b.classList.add('on');
+    document.querySelectorAll('.usec').forEach(e=>e.classList.add('show'));
+    document.getElementById('calpanel').classList.add('show');
+    document.getElementById('addnewsbtn').classList.add('show');
+    closeModal('mlogin');
+  } else {
+    document.getElementById('login-err').style.display='block';
+    document.getElementById('login-pass').value='';
+    document.getElementById('login-pass').focus();
+  }
+}
+
+// FILE UPLOAD (generic for tabs)
+function loadFile(inp,tid){
+  const f=inp.files[0]; if(!f) return;
+  const url=URL.createObjectURL(f);
+  document.getElementById(tid).innerHTML=`<div class="ifrwrap"><div class="ifrbar"><div class="idot" style="background:#ff5f57"></div><div class="idot" style="background:#febc2e"></div><div class="idot" style="background:#28c840"></div><span style="margin-left:6px;">📄 ${f.name}</span></div><iframe src="${url}" style="width:100%;height:480px;border:none;display:block;"></iframe></div>`;
+}
+function setst(id,inp){const e=document.getElementById(id);if(e&&inp.files[0])e.textContent='✅ '+inp.files[0].name;}
+
+// NEWS FILE UPLOAD (PDF or Image)
+function handleNewsFile(e){
+  const f=e.target.files[0]; if(!f) return;
+  const url=URL.createObjectURL(f);
+  const isPDF=f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf');
+  newsFilePending={type:isPDF?'pdf':'img',url,name:f.name};
+  const pz=document.getElementById('pz-news');
+  pz.classList.add('has-file');
+  document.getElementById('pz-news-name').style.display='block';
+  document.getElementById('pz-news-name').textContent='✅ '+f.name;
+  const prev=document.getElementById('news-img-preview');
+  if(!isPDF){prev.src=url;prev.style.display='block';}
+  else{prev.style.display='none';}
+}
+
+function previewUrl(v){
+  const prev=document.getElementById('news-img-preview');
+  if(v&&v.startsWith('http')){prev.src=v;prev.style.display='block';}
+  else{prev.style.display='none';}
+}
+
+// HERO IMAGE SLIDESHOW
+let heroImages=[];
+let heroImgIdx=0;
+
+function handleHeroImages(e){
+  const files=Array.from(e.target.files); if(!files.length) return;
+  files.forEach(f=>{
+    const isPDF=f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf');
+    heroImages.unshift({url:URL.createObjectURL(f), name:f.name, isPDF});
+  });
+  heroImgIdx=0;
+  renderHero();
+}
+
+function handleHeroImg(e){
+  const f=e.target.files[0]; if(!f) return;
+  heroImgPending=URL.createObjectURL(f);
+  document.getElementById('pz-hero').classList.add('has-file');
+  document.getElementById('pz-hero-name').style.display='block';
+  document.getElementById('pz-hero-name').textContent='✅ '+f.name;
+  const prev=document.getElementById('hero-img-preview');
+  prev.src=heroImgPending; prev.style.display='block';
+}
+
+// SLIDESHOW — A4 ratio, full PDF page display
+function renderSS(){
+  const w=document.getElementById('ssw'); w.innerHTML='';
+  if(!newsData.length){
+    w.innerHTML='<div class="sld act"><div class="sld-ph" style="background:#e8f5ed"><div style="font-size:44px">📰</div><div style="font-size:13px;color:#4a6857;font-weight:600;text-align:center">ยังไม่มีข่าวสาร<br><span style="font-size:11px;font-weight:400">เปิด Admin แล้วเพิ่มข่าวได้เลย</span></div></div></div>';
+    return;
+  }
+  newsData.forEach((n,i)=>{
+    const s=document.createElement('div'); s.className='sld'+(i===0?' act':'');
+    const bg=TGBG[n.tag]||'#e8f5ed';
+    if(n.pdfUrl){
+      s.innerHTML=`<iframe src="${n.pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&page=1&zoom=page-fit" style="width:100%;height:100%;border:none;display:block;position:absolute;inset:0;background:#fff" loading="lazy"></iframe>
+        <div style="position:absolute;top:8px;left:8px;background:rgba(192,57,43,.9);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;z-index:3">📄 PDF</div>
+        <div class="sld-ov" style="z-index:3"><div class="sld-tag">${TGLBL[n.tag]||n.tag}</div><div class="sld-title">${n.title}</div><div class="sld-date">${n.date}</div></div>`;
+    } else if(n.img){
+      s.innerHTML=`<img src="${n.img}" class="sld-img" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div class="sld-ph" style="background:${bg};display:none;"><div style="font-size:50px">${TGICO[n.tag]}</div></div>
+        <div class="sld-ov"><div class="sld-tag">${TGLBL[n.tag]||n.tag}</div><div class="sld-title">${n.title}</div><div class="sld-date">${n.date}</div></div>`;
+    } else {
+      s.innerHTML=`<div class="sld-ph" style="background:${bg};"><div style="font-size:50px">${TGICO[n.tag]||'📰'}</div><div style="font-size:14px;color:#4a6857;font-weight:600;padding:0 36px;text-align:center">${n.title}</div></div>
+        <div class="sld-ov"><div class="sld-tag">${TGLBL[n.tag]||n.tag}</div><div class="sld-title">${n.title}</div><div class="sld-date">${n.date}</div></div>`;
+    }
+    s.addEventListener('click',()=>openNewsDetail(n));
+    w.appendChild(s);
+  });
+  w.innerHTML+=`<button class="sarr sprev" onclick="event.stopPropagation();moveSlide(-1)">&#8249;</button><button class="sarr snext" onclick="event.stopPropagation();moveSlide(1)">&#8250;</button>`;
+  const dw=document.createElement('div'); dw.className='sdots'; dw.id='sdots';
+  newsData.forEach((_,i)=>{const d=document.createElement('div');d.className='sdot'+(i===0?' act':'');d.onclick=(e)=>{e.stopPropagation();gotoSlide(i);};dw.appendChild(d);});
+  w.appendChild(dw);
+}
+function gotoSlide(i){
+  const sl=document.querySelectorAll('.sld'),dt=document.querySelectorAll('.sdot');
+  if(!sl.length||!dt.length) return;
+  sl[slideIdx].classList.remove('act'); dt[slideIdx].classList.remove('act');
+  slideIdx=(i+sl.length)%sl.length;
+  sl[slideIdx].classList.add('act'); dt[slideIdx].classList.add('act');
+}
+function moveSlide(d){gotoSlide(slideIdx+d);}
+setInterval(()=>{if(document.getElementById('tab-news').classList.contains('act'))moveSlide(1);},5000);
+
+// MINI NEWS
+function renderMini(){
+  const g=document.getElementById('nmgrid'); g.innerHTML='';
+  newsData.slice(0,6).forEach(n=>{
+    const el=document.createElement('div'); el.className='nmini';
+    const hasPDF=n.pdfUrl?`<span class="pdf-badge">📄 PDF</span>`:'';
+    el.innerHTML=`<div class="nmimg" style="background:${TGBG[n.tag]||'#e8f5ed'}">${n.img?`<img src="${n.img}" style="width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.parentElement.textContent='${TGICO[n.tag]||'📰'}'">`:TGICO[n.tag]||'📰'}</div>
+    <div style="min-width:0;flex:1"><span class="ntag ${TGCLS[n.tag]||'ts'}">${TGLBL[n.tag]||n.tag}</span><div class="nmtitle">${n.title}${hasPDF}</div><div class="nmdate">${n.date}</div></div>`;
+    el.addEventListener('click',()=>openNewsDetail(n));
+    g.appendChild(el);
+  });
+}
+
+// NEWS DETAIL POPUP
+function openNewsDetail(n){
+  document.getElementById('detail-tag').innerHTML=`<span class="ntag ${TGCLS[n.tag]||'ts'}">${TGLBL[n.tag]||n.tag}</span>`;
+  document.getElementById('detail-title').textContent=n.title;
+  document.getElementById('detail-date').textContent=n.date;
+  document.getElementById('detail-body').textContent=n.detail||'';
+  const pdfDiv=document.getElementById('news-detail-pdf');
+  if(n.pdfUrl){
+    pdfDiv.innerHTML=`<div class="ifrwrap"><div class="ifrbar"><div class="idot" style="background:#ff5f57"></div><div class="idot" style="background:#febc2e"></div><div class="idot" style="background:#28c840"></div><span style="margin-left:6px;">📄 ${n.pdfName||'ไฟล์แนบ'}</span></div><iframe src="${n.pdfUrl}" style="width:100%;height:420px;border:none;display:block;"></iframe></div>`;
+  } else pdfDiv.innerHTML='';
+  openModal('mnewsdetail');
+}
+
+// HERO — A4 image slideshow
+function renderHero(){
+  const disp=document.getElementById('herodisp');
+  if(heroImages.length){
+    // Image slideshow mode — A4 ratio
+    const k=heroImages[heroImgIdx];
+    const navHtml=heroImages.length>1?`
+      <button class="hero-sarr hero-sprev" onclick="event.stopPropagation();heroMove(-1)">&#8249;</button>
+      <button class="hero-sarr hero-snext" onclick="event.stopPropagation();heroMove(1)">&#8250;</button>
+      <div class="hero-dots">${heroImages.map((_,i)=>`<div class="hero-dot${i===heroImgIdx?' act':''}" onclick="heroGoto(${i})"></div>`).join('')}</div>`:''
+    ;
+    let inner='';
+    if(k.isPDF){
+      inner=`<iframe src="${k.url}#toolbar=0&navpanes=0&scrollbar=0" style="width:100%;height:100%;border:none;display:block;position:absolute;inset:0" loading="lazy"></iframe>`;
+    } else {
+      inner=`<img src="${k.url}" style="width:100%;height:100%;object-fit:contain;display:block;position:absolute;inset:0;background:#fff">`;
+    }
+    disp.innerHTML=`<div class="hero-ssw">${inner}${navHtml}</div>`;
+  } else {
+    // Fallback text card
+    const imgHtml=heroData.img?`<div class="hav"><img src="${heroData.img}" onerror="this.outerHTML='⭐'"></div>`:'<div class="hav">⭐</div>';
+    disp.innerHTML=`<div class="hero-widget">${imgHtml}<div><div class="hmlbl">⭐ Safety Hero — ${heroData.month}</div><div class="hname">${heroData.name}</div><div class="hreason">${heroData.dept?`<strong>${heroData.dept}</strong> — `:''}${heroData.reason}</div></div></div>`;
+  }
+}
+function heroMove(d){
+  if(!heroImages.length) return;
+  heroImgIdx=(heroImgIdx+d+heroImages.length)%heroImages.length;
+  renderHero();
+}
+function heroGoto(i){heroImgIdx=i;renderHero();}
+
+// KYT IMAGE SLIDESHOW — same height as current news (220px)
+let kytImages=[];
+let kytImgIdx=0;
+
+function handleKytImages(e){
+  const files=Array.from(e.target.files); if(!files.length) return;
+  files.forEach(f=>{
+    const isPDF=f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf');
+    kytImages.unshift({url:URL.createObjectURL(f), name:f.name, isPDF});
+  });
+  kytImgIdx=0;
+  renderKyt();
+}
+
+function renderKyt(){
+  const wrap=document.getElementById('kyt-img-wrap'); if(!wrap) return;
+  if(!kytImages.length){
+    wrap.innerHTML=`<div class="ph" style="padding:24px"><div class="phic">👁️</div><div class="phtit" style="font-size:14px">KYT ประจำสัปดาห์</div><div class="phdesc">Admin อัปโหลดรูปภาพ KYT ได้เลย</div></div>`;
+    return;
+  }
+  const k=kytImages[kytImgIdx];
+  const navHtml=kytImages.length>1?`<div class="kyt-nav-bar">
+    <button class="kyt-nbtn" onclick="kytMove(-1)">← ก่อน</button>
+    <span style="color:#fff;font-size:11px">${kytImgIdx+1} / ${kytImages.length}</span>
+    <button class="kyt-nbtn" onclick="kytMove(1)">ถัด →</button>
+  </div>`:'';
+  if(k.isPDF){
+    wrap.innerHTML=`<div class="kyt-img-box" style="min-height:auto"><iframe src="${k.url}#toolbar=0&navpanes=0&scrollbar=0" style="width:100%;height:500px;border:none;display:block"></iframe>${navHtml}</div>`;
+  } else {
+    wrap.innerHTML=`<div class="kyt-img-box" onclick="openKytFull('${k.url}')"><img src="${k.url}">${navHtml}</div>`;
+  }
+}
+function kytMove(d){
+  if(!kytImages.length) return;
+  kytImgIdx=(kytImgIdx+d+kytImages.length)%kytImages.length;
+  renderKyt();
+}
+function openKytFull(url){
+  document.getElementById('kyt-full-img').src=url;
+  openModal('mkytfull');
+}
+
+// CALENDAR
+function buildCal(){
+  const w=document.getElementById('fullcal'); w.innerHTML='';
+  const today=new Date();
+  MTHAI.forEach((mn,m)=>{
+    const c=document.createElement('div'); c.className='calmo';
+    c.innerHTML=`<div class="calmoh">${mn} 2569</div><div class="caldow">${['อา','จ','อ','พ','พฤ','ศ','ส'].map(d=>`<div class="caldowc">${d}</div>`).join('')}</div>`;
+    const g=document.createElement('div'); g.className='caldays';
+    const first=new Date(2026,m,1).getDay(), days=new Date(2026,m+1,0).getDate();
+    for(let i=0;i<first;i++){const e=document.createElement('div');e.className='cald empty';g.appendChild(e);}
+    for(let d=1;d<=days;d++){
+      const key=`2026-${m+1}-${d}`, cell=document.createElement('div');
+      cell.textContent=d; cell.className='cald';
+      const st=calData[key]; if(st) cell.classList.add(st);
+      if(today.getFullYear()===2026&&today.getMonth()===m&&today.getDate()===d) cell.classList.add('today');
+      cell.addEventListener('click',()=>{
+        if(!adminOn) return;
+        const cy=[null,'safe','incident','lost'];
+        const nx=cy[(cy.indexOf(calData[key]||null)+1)%cy.length];
+        cell.className='cald'; if(nx){calData[key]=nx;cell.classList.add(nx);}else delete calData[key];
+        if(today.getFullYear()===2026&&today.getMonth()===m&&today.getDate()===d) cell.classList.add('today');
+        calcDays();
+      });
+      g.appendChild(cell);
+    }
+    c.appendChild(g); w.appendChild(c);
+  });
+}
+
+// DISEASE CHART
+function buildDis(){
+  const data=[{n:'ทางเดินหายใจ',v:74},{n:'ทางเดินอาหาร',v:42},{n:'ระบบประสาท',v:25},{n:'กล้ามเนื้อ/กระดูก',v:24},{n:'ตา/หู/จมูก',v:17}];
+  document.getElementById('dischart').innerHTML=data.map(d=>`<div class="brow"><div class="blrow"><span>${d.n}</span><span class="bv">${d.v}</span></div><div class="btrack"><div class="bfill" style="width:${Math.round(d.v/74*100)}%"></div></div></div>`).join('');
+}
+
+// MODALS
+function openModal(id){
+  if(id==='mnews'){
+    document.getElementById('ndate').value=new Date().toISOString().split('T')[0];
+    document.getElementById('ntitle').value='';
+    document.getElementById('ndetail').value='';
+    document.getElementById('nimg').value='';
+    document.getElementById('news-img-preview').style.display='none';
+    document.getElementById('pz-news').classList.remove('has-file');
+    document.getElementById('pz-news-name').style.display='none';
+    newsFilePending=null;
+  }
+  if(id==='mhero'){
+    document.getElementById('hmonth').value=heroData.month;
+    document.getElementById('hname').value=heroData.name==='— รอประกาศ —'?'':heroData.name;
+    document.getElementById('hdept').value=heroData.dept;
+    document.getElementById('hreason').value=heroData.reason;
+    document.getElementById('himg').value=heroData.img;
+    document.getElementById('hero-img-preview').style.display='none';
+    document.getElementById('pz-hero').classList.remove('has-file');
+    document.getElementById('pz-hero-name').style.display='none';
+    heroImgPending=null;
+  }
+  document.getElementById(id).classList.add('show');
+}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+document.querySelectorAll('.movl').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');}));
+
+function saveNews(){
+  const t=document.getElementById('ntitle').value.trim(); if(!t)return alert('กรุณากรอกหัวข้อ');
+  const raw=document.getElementById('ndate').value, dt=raw?new Date(raw):new Date();
+  const ds=`${dt.getDate()} ${MSHORT[dt.getMonth()]} ${String(dt.getFullYear()).slice(-2)}`;
+  const urlImg=document.getElementById('nimg').value.trim();
+  
+  let imgFinal='', pdfUrlFinal='', pdfNameFinal='';
+  if(newsFilePending){
+    if(newsFilePending.type==='pdf'){pdfUrlFinal=newsFilePending.url;pdfNameFinal=newsFilePending.name;}
+    else{imgFinal=newsFilePending.url;}
+  }
+  if(urlImg) imgFinal=urlImg;
+  
+  newsData.unshift({id:Date.now(),title:t,detail:document.getElementById('ndetail').value,date:ds,tag:document.getElementById('ntag').value,img:imgFinal,pdfUrl:pdfUrlFinal,pdfName:pdfNameFinal});
+  renderSS(); renderMini(); closeModal('mnews');
+}
+function saveHero(){
+  const imgUrl=heroImgPending||document.getElementById('himg').value;
+  heroData={month:document.getElementById('hmonth').value,name:document.getElementById('hname').value||'— รอประกาศ —',dept:document.getElementById('hdept').value,reason:document.getElementById('hreason').value,img:imgUrl};
+  renderHero(); closeModal('mhero');
+}
+
+// INIT
+renderSS(); renderMini(); renderKyt(); renderHero(); buildCal(); buildDis();
+</script>
+</body>
+</html>
