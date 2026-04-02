@@ -282,7 +282,10 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(
     <div class="clbl">✅ ปลอดอุบัติเหตุมาแล้ว</div>
     <div class="cnum" id="daycount">0</div>
     <div class="cunit">วัน</div>
-    <div class="csince">นับตั้งแต่ 1 มกราคม 2569</div>
+    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center">
+      <div class="csince" id="csince">นับตั้งแต่ 1 มกราคม 2569</div>
+      <button id="editstart-btn" onclick="openStartDateModal()" style="display:none;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;font-size:10px;padding:2px 8px;border-radius:10px;cursor:pointer;font-family:inherit">✏️ แก้วันเริ่ม</button>
+    </div>
   </div>
 </div>
 
@@ -356,14 +359,14 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(
   <!-- KYT ปฏิทินประจำปี -->
   <div class="sec-lbl" style="margin-top:14px">📅 ปฏิทิน KYT ประจำปี 2569</div>
   <div id="ukytcal" class="usec" style="margin-bottom:8px">
-    <div class="utitle">Admin — อัปโหลดปฏิทิน KYT ประจำปี (PDF)</div>
-    <div class="ahint">อัปโหลดไฟล์ PDF ปฏิทิน KYT รายปี — แสดงแยกตามเดือน กดแท็บเดือนเพื่อเปลี่ยน</div>
+    <div class="utitle">Admin — อัปโหลดปฏิทิน KYT ประจำปี (ภาพ/PDF)</div>
+    <div class="ahint">รองรับทั้ง รูปภาพ (JPG, PNG) และ PDF แยกตามเดือน</div>
     <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
       <label class="bsave" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:6px 14px">
-        📎 อัปโหลด PDF ปฏิทิน KYT
-        <input type="file" accept=".pdf" multiple style="display:none" onchange="handleKytCalPdf(event)">
+        🖼 อัปโหลดปฏิทิน KYT
+        <input type="file" accept="image/*,.pdf" multiple style="display:none" onchange="handleKytCalPdf(event)">
       </label>
-      <button class="bsave" onclick="deleteKytCalPdf()" style="background:var(--red);border-color:var(--red);font-size:12px;padding:6px 14px">🗑 ลบไฟล์ที่เลือก</button>
+      <button class="bsave" onclick="deleteKytCalPdf()" style="background:var(--red);border-color:var(--red);font-size:12px;padding:6px 14px">🗑 ลบเดือนที่เลือก</button>
     </div>
   </div>
   <div class="card" style="padding:12px">
@@ -386,14 +389,18 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(
   <div class="apanel" id="calpanel">
     <strong>🔧 Admin Mode</strong> — คลิกวันเพื่อเปลี่ยนสถานะ (ติ๊กอัตโนมัติยกเว้นวันอาทิตย์และวันหยุด)
     <div class="ahint">คลิก 1 = ✅ ปลอดภัย &nbsp;|&nbsp; คลิก 2 = ⚠️ เหตุเล็กน้อย &nbsp;|&nbsp; คลิก 3 = 🔴 หยุดงาน &nbsp;|&nbsp; คลิก 4 = ล้างค่า</div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="bsave" onclick="openHolidaysModal()" style="font-size:12px;padding:6px 14px">🎌 จัดการวันหยุดนักขัตฤกษ์</button>
+    </div>
   </div>
   <div class="calleg">
     <div class="clli"><div class="clbox" style="background:#d1eeda;border:1px solid #a0d4b0"></div>✅ ปลอดอุบัติเหตุ</div>
     <div class="clli"><div class="clbox" style="background:#fef5e4;border:1px solid #f0d080"></div>⚠️ เหตุเล็กน้อย</div>
     <div class="clli"><div class="clbox" style="background:#fdecea;border:1px solid #f0b0a8"></div>🔴 หยุดงาน</div>
-    <div class="clli"><div class="clbox" style="background:#fde8ff;border:1px solid #d8a0e8"></div>📅 วันหยุดนักขัตฤกษ์</div>
+    <div class="clli"><div class="clbox" style="background:#fde8ff;border:1px solid #d8a0e8"></div>🎌 วันหยุดนักขัตฤกษ์</div>
     <div class="clli"><div class="clbox" style="background:#f0f0f0;border:1px solid #ccc"></div>อาทิตย์/ยังไม่มีข้อมูล</div>
   </div>
+  <div id="cal-year-label" style="font-size:13px;font-weight:700;color:var(--green);margin-bottom:10px;text-align:center"></div>
   <div class="calyear" id="fullcal"></div>
 </div>
 
@@ -663,6 +670,47 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(
   </div>
 </div>
 
+<!-- HOLIDAYS MANAGEMENT MODAL -->
+<div class="movl" id="mholidays">
+  <div class="mbox" style="max-width:480px">
+    <div class="mbox-handle"></div>
+    <div class="mtit">🎌 จัดการวันหยุดนักขัตฤกษ์</div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:12px">รูปแบบ: ปีค.ศ.-เดือน-วัน เช่น 2026-4-13 (ไม่ต้องใส่ศูนย์นำหน้า)</div>
+    <div class="mfield">
+      <label class="mlbl">เพิ่มวันหยุดใหม่</label>
+      <div style="display:flex;gap:6px">
+        <input class="minp" id="hol-inp" placeholder="2026-12-31" style="flex:1" onkeydown="if(event.key==='Enter')addHoliday()">
+        <button class="bsave" onclick="addHoliday()" style="white-space:nowrap;padding:8px 14px">+ เพิ่ม</button>
+      </div>
+    </div>
+    <div class="mfield">
+      <label class="mlbl">วันหยุดทั้งหมด (<span id="hol-count">0</span> วัน)</label>
+      <div id="hol-list" style="max-height:280px;overflow-y:auto;border:1px solid var(--brd);border-radius:8px;padding:6px"></div>
+    </div>
+    <div class="mbtns">
+      <button class="bcancel" onclick="closeModal('mholidays')">ปิด</button>
+      <button class="bsave" onclick="applyHolidays()">✅ บันทึกและอัปเดตปฏิทิน</button>
+    </div>
+  </div>
+</div>
+
+<!-- START DATE MODAL -->
+<div class="movl" id="mstartdate">
+  <div class="mbox" style="max-width:360px">
+    <div class="mbox-handle"></div>
+    <div class="mtit">📅 แก้ไขวันเริ่มนับอุบัติเหตุ</div>
+    <div class="mfield">
+      <label class="mlbl">วันเริ่มต้นนับ (ปลอดอุบัติเหตุตั้งแต่วันนี้)</label>
+      <input class="minp" id="startdate-inp" type="date">
+    </div>
+    <div style="font-size:12px;color:var(--text2);margin-bottom:10px">วันนี้จะถูกนับเป็นวันที่ 1 ของการนับถอยหลัง</div>
+    <div class="mbtns">
+      <button class="bcancel" onclick="closeModal('mstartdate')">ยกเลิก</button>
+      <button class="bsave" onclick="saveStartDate()">💾 บันทึก</button>
+    </div>
+  </div>
+</div>
+
 <!-- (KYT calendar note modal removed — now PDF-based) -->
 
 <script>
@@ -674,8 +722,42 @@ const TGICO={safety:'🛡️',health:'🏥',event:'📅',alert:'⚠️'};
 const TGBG={safety:'#e8f5ed',health:'#e8f4fd',event:'#fef5e4',alert:'#fdecea'};
 
 let adminOn=false, slideIdx=0, kytIdx=0;
-const START=new Date('2026-01-01');
-let calData={};
+
+// ─── DYNAMIC YEAR — auto-roll over each Jan 1 ───
+let CAL_YEAR=new Date().getFullYear(); // e.g. 2026
+// if today is still in a year where we have data, keep it; roll over automatically
+function getCalYear(){ return new Date().getFullYear(); }
+
+// ─── ACCIDENT-FREE START DATE (editable by admin) ───
+let startDateStr=localStorage.getItem('safetyStartDate')||`${CAL_YEAR}-01-01`;
+let START=new Date(startDateStr);
+
+function updateStartDisplay(){
+  const d=START;
+  const months=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+  const el=document.getElementById('csince');
+  if(el) el.textContent=`นับตั้งแต่ ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()+543}`;
+}
+
+// ─── HOLIDAYS — editable by admin, stored per year ───
+let holidaysList=JSON.parse(localStorage.getItem('holidaysList')||'null') || [
+  `${CAL_YEAR}-1-1`,`${CAL_YEAR}-2-17`,
+  `${CAL_YEAR}-4-13`,`${CAL_YEAR}-4-14`,`${CAL_YEAR}-4-15`,`${CAL_YEAR}-4-16`,
+  `${CAL_YEAR}-5-1`,
+  `${CAL_YEAR}-6-3`,
+  `${CAL_YEAR}-7-28`,`${CAL_YEAR}-7-29`,
+  `${CAL_YEAR}-8-12`,
+  `${CAL_YEAR}-10-12`,`${CAL_YEAR}-10-13`,`${CAL_YEAR}-10-23`,
+  `${CAL_YEAR}-12-5`,`${CAL_YEAR}-12-30`,`${CAL_YEAR}-12-31`
+];
+let HOLIDAYS=new Set(holidaysList);
+
+function saveHolidays(){
+  holidaysList=[...HOLIDAYS];
+  localStorage.setItem('holidaysList',JSON.stringify(holidaysList));
+}
+
+let calData=JSON.parse(localStorage.getItem('calData')||'{}');
 // Auto-tick handled in buildCal()
 
 // temp file blobs for news
@@ -706,6 +788,7 @@ function calcDays(){
   document.getElementById('daycount').textContent=s;
 }
 calcDays();
+updateStartDisplay();
 
 // TABS
 function showTab(id){
@@ -727,6 +810,7 @@ function toggleAdmin(){
     document.querySelectorAll('.usec').forEach(e=>e.classList.remove('show'));
     document.getElementById('calpanel').classList.remove('show');
     document.getElementById('addnewsbtn').classList.remove('show');
+    const esb=document.getElementById('editstart-btn'); if(esb) esb.style.display='none';
     renderMini(); renderHero(); renderKyt(); renderSS();
     ['kpi','cpo','nurse','audit','ncr','kaizen','culture'].forEach(k=>{if(fileStore[k]&&fileStore[k].length)renderFileSection(k+'frame',k);});
   } else {
@@ -746,6 +830,7 @@ function doLogin(){
     document.querySelectorAll('.usec').forEach(e=>e.classList.add('show'));
     document.getElementById('calpanel').classList.add('show');
     document.getElementById('addnewsbtn').classList.add('show');
+    const esb=document.getElementById('editstart-btn'); if(esb) esb.style.display='inline-block';
     closeModal('mlogin');
     renderMini(); renderHero(); renderKyt(); renderSS();
     ['kpi','cpo','nurse','audit','ncr','kaizen','culture'].forEach(k=>{if(fileStore[k]&&fileStore[k].length)renderFileSection(k+'frame',k);});
@@ -971,84 +1056,113 @@ function openKytFull(url){
   openModal('mkytfull');
 }
 
-// ─── HOLIDAYS 2026 (วันหยุดนักขัตฤกษ์) ───
-const HOLIDAYS_2026=new Set([
-  '2026-1-1','2026-2-17',
-  '2026-4-13','2026-4-14','2026-4-15','2026-4-16',
-  '2026-5-1',
-  '2026-6-3',
-  '2026-7-28','2026-7-29',
-  '2026-8-12',
-  '2026-10-12','2026-10-13','2026-10-23',
-  '2026-12-5','2026-12-30','2026-12-31'
-]);
-
-// ─── CALENDAR with auto-tick ───
+// ─── CALENDAR — dynamic year, auto-roll ───
 function buildCal(){
   const w=document.getElementById('fullcal'); w.innerHTML='';
   const today=new Date(); today.setHours(0,0,0,0);
-  // Auto-tick past & today workdays not yet marked
-  MTHAI.forEach((mn,m)=>{
-    const days=new Date(2026,m+1,0).getDate();
+  const yr=today.getFullYear();
+  CAL_YEAR=yr;
+
+  // Update year label
+  const lbl=document.getElementById('cal-year-label');
+  if(lbl) lbl.textContent=`ปฏิทินความปลอดภัย ประจำปี พ.ศ. ${yr+543}`;
+
+  // Rebuild HOLIDAYS set fresh (supports any year in list)
+  HOLIDAYS=new Set(holidaysList);
+
+  // Auto-tick past workdays not yet marked
+  for(let m=0;m<12;m++){
+    const days=new Date(yr,m+1,0).getDate();
     for(let d=1;d<=days;d++){
-      const dt=new Date(2026,m,d); dt.setHours(0,0,0,0);
-      const key=`2026-${m+1}-${d}`;
-      const dow=dt.getDay(); // 0=Sun
-      const isHol=HOLIDAYS_2026.has(key);
-      if(dt<=today && dow!==0 && !isHol && !calData[key]){
+      const dt=new Date(yr,m,d); dt.setHours(0,0,0,0);
+      const key=`${yr}-${m+1}-${d}`;
+      const isHol=HOLIDAYS.has(key);
+      if(dt<=today && dt.getDay()!==0 && !isHol && !calData[key]){
         calData[key]='safe';
       }
     }
-  });
+  }
+  localStorage.setItem('calData',JSON.stringify(calData));
 
   MTHAI.forEach((mn,m)=>{
     const c=document.createElement('div'); c.className='calmo';
-    c.innerHTML=`<div class="calmoh">${mn} 2569</div><div class="caldow">${['อา','จ','อ','พ','พฤ','ศ','ส'].map(d=>`<div class="caldowc">${d}</div>`).join('')}</div>`;
+    c.innerHTML=`<div class="calmoh">${mn} ${yr+543}</div><div class="caldow">${['อา','จ','อ','พ','พฤ','ศ','ส'].map(d=>`<div class="caldowc">${d}</div>`).join('')}</div>`;
     const g=document.createElement('div'); g.className='caldays';
-    const first=new Date(2026,m,1).getDay(), days=new Date(2026,m+1,0).getDate();
+    const first=new Date(yr,m,1).getDay(), days=new Date(yr,m+1,0).getDate();
     for(let i=0;i<first;i++){const e=document.createElement('div');e.className='cald empty';g.appendChild(e);}
     for(let d=1;d<=days;d++){
-      const key=`2026-${m+1}-${d}`;
-      const dt=new Date(2026,m,d); dt.setHours(0,0,0,0);
+      const key=`${yr}-${m+1}-${d}`;
+      const dt=new Date(yr,m,d); dt.setHours(0,0,0,0);
       const dow=dt.getDay();
-      const isHol=HOLIDAYS_2026.has(key);
+      const isHol=HOLIDAYS.has(key);
       const isSun=dow===0;
       const cell=document.createElement('div');
       cell.className='cald';
-      // Sunday style
       if(isSun) cell.classList.add('sun');
-      // Holiday style
       else if(isHol) cell.classList.add('holiday');
-      // Status
       const st=calData[key]; if(st) cell.classList.add(st);
-      // Today border
-      if(today.getFullYear()===2026&&today.getMonth()===m&&today.getDate()===d) cell.classList.add('today');
-
-      // Cell content: date + tick/mark
+      if(dt.getTime()===today.getTime()) cell.classList.add('today');
       let inner=`<span class="cald-num">${d}</span>`;
-      if(isHol){
-        inner+=`<span class="cald-hol">🎌</span>`;
-      } else if(!isSun && st==='safe'){
-        inner+=`<span class="cald-tick">✓</span>`;
-      } else if(!isSun && st==='incident'){
-        inner+=`<span class="cald-tick" style="color:#a07000">!</span>`;
-      } else if(!isSun && st==='lost'){
-        inner+=`<span class="cald-tick" style="color:#8b1a14">✕</span>`;
-      }
+      if(isHol) inner+=`<span class="cald-hol">🎌</span>`;
+      else if(!isSun && st==='safe') inner+=`<span class="cald-tick">✓</span>`;
+      else if(!isSun && st==='incident') inner+=`<span class="cald-tick" style="color:#a07000">!</span>`;
+      else if(!isSun && st==='lost') inner+=`<span class="cald-tick" style="color:#8b1a14">✕</span>`;
       cell.innerHTML=inner;
-
       cell.addEventListener('click',()=>{
         if(!adminOn||isSun||isHol) return;
         const cy=[null,'safe','incident','lost'];
         const nx=cy[(cy.indexOf(calData[key]||null)+1)%cy.length];
-        calData[key]=nx||undefined;
-        if(!nx) delete calData[key];
+        if(nx) calData[key]=nx; else delete calData[key];
+        localStorage.setItem('calData',JSON.stringify(calData));
         buildCal(); calcDays();
       });
       g.appendChild(cell);
     }
     c.appendChild(g); w.appendChild(c);
   });
+}
+
+// ─── HOLIDAYS MANAGEMENT ───
+function openHolidaysModal(){
+  renderHolList();
+  openModal('mholidays');
+}
+function renderHolList(){
+  const sorted=[...HOLIDAYS].sort();
+  document.getElementById('hol-count').textContent=sorted.length;
+  document.getElementById('hol-list').innerHTML=sorted.length
+    ? sorted.map(k=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-bottom:0.5px solid var(--brd);font-size:13px">
+        <span>${k}</span>
+        <button onclick="removeHoliday('${k}')" style="background:#c0392b;border:none;color:#fff;width:20px;height:20px;border-radius:50%;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">×</button>
+      </div>`).join('')
+    : '<div style="text-align:center;padding:16px;color:var(--text3);font-size:13px">ไม่มีวันหยุด</div>';
+}
+function addHoliday(){
+  const v=document.getElementById('hol-inp').value.trim();
+  if(!v||!/^\d{4}-\d{1,2}-\d{1,2}$/.test(v)){alert('รูปแบบไม่ถูกต้อง เช่น 2026-4-13');return;}
+  HOLIDAYS.add(v); holidaysList=[...HOLIDAYS];
+  document.getElementById('hol-inp').value='';
+  renderHolList();
+}
+function removeHoliday(k){
+  HOLIDAYS.delete(k); holidaysList=[...HOLIDAYS]; renderHolList();
+}
+function applyHolidays(){
+  saveHolidays(); closeModal('mholidays'); buildCal(); calcDays();
+}
+
+// ─── START DATE MANAGEMENT ───
+function saveStartDate(){
+  const v=document.getElementById('startdate-inp').value;
+  if(!v) return;
+  startDateStr=v;
+  START=new Date(v);
+  localStorage.setItem('safetyStartDate',v);
+  updateStartDisplay(); calcDays(); closeModal('mstartdate');
+}
+function openStartDateModal(){
+  document.getElementById('startdate-inp').value=startDateStr;
+  openModal('mstartdate');
 }
 
 // ─── FILE UPLOAD with history/delete ───
@@ -1122,12 +1236,11 @@ function handleKytCalPdf(e){
   const files=Array.from(e.target.files); if(!files.length) return;
   files.forEach(f=>{
     const url=URL.createObjectURL(f);
-    // Try to detect month from filename, else assign to current selected month
+    const isPDF=f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf');
     let m=kytCalMonthSel;
     KYTCAL_MONTHS_FULL.forEach((mn,i)=>{ if(f.name.includes(mn)||f.name.includes(KYTCAL_MONTHS_SHORT[i])) m=i; });
-    // Remove existing for same month, then add
     kytCalPdfs=kytCalPdfs.filter(p=>p.month!==m);
-    kytCalPdfs.push({url, name:f.name, month:m});
+    kytCalPdfs.push({url, name:f.name, month:m, isPDF});
     kytCalMonthSel=m;
   });
   buildKytCalTabs();
@@ -1138,8 +1251,9 @@ function deleteKytCalPdf(){
   if(!adminOn) return;
   const has=kytCalPdfs.find(p=>p.month===kytCalMonthSel);
   if(!has){alert('ไม่มีไฟล์ในเดือนนี้');return;}
-  if(!confirm(`ลบ PDF เดือน ${KYTCAL_MONTHS_FULL[kytCalMonthSel]} ออก?`)) return;
+  if(!confirm(`ลบไฟล์เดือน ${KYTCAL_MONTHS_FULL[kytCalMonthSel]} ออก?`)) return;
   kytCalPdfs=kytCalPdfs.filter(p=>p.month!==kytCalMonthSel);
+  buildKytCalTabs();
   buildKytCalGrid();
 }
 
@@ -1162,24 +1276,34 @@ function kytCalSwitch(m){
 
 function buildKytCalGrid(){
   const g=document.getElementById('kytcal-grid'); if(!g) return;
-  const pdf=kytCalPdfs.find(p=>p.month===kytCalMonthSel);
-  const delBtn=adminOn&&pdf?`<button onclick="deleteKytCalPdf()" style="background:#c0392b;border:none;color:#fff;padding:4px 11px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;margin-left:8px">🗑 ลบ</button>`:'';
-  if(pdf){
-    g.innerHTML=`<div class="ifrwrap">
-      <div class="ifrbar">
-        <div class="idot" style="background:#ff5f57"></div>
-        <div class="idot" style="background:#febc2e"></div>
-        <div class="idot" style="background:#28c840"></div>
-        <span style="margin-left:6px;flex:1">📅 ${KYTCAL_MONTHS_FULL[kytCalMonthSel]} 2569 — ${pdf.name}</span>
-        ${delBtn}
-      </div>
-      <iframe src="${pdf.url}#toolbar=0&navpanes=0&scrollbar=0" style="width:100%;height:600px;border:none;display:block"></iframe>
-    </div>`;
+  const item=kytCalPdfs.find(p=>p.month===kytCalMonthSel);
+  const delBtn=adminOn&&item?`<button onclick="deleteKytCalPdf()" style="background:#c0392b;border:none;color:#fff;padding:4px 11px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;margin-left:8px">🗑 ลบ</button>`:'';
+  if(item){
+    if(item.isPDF){
+      g.innerHTML=`<div class="ifrwrap">
+        <div class="ifrbar">
+          <div class="idot" style="background:#ff5f57"></div>
+          <div class="idot" style="background:#febc2e"></div>
+          <div class="idot" style="background:#28c840"></div>
+          <span style="margin-left:6px;flex:1">📅 ${KYTCAL_MONTHS_FULL[kytCalMonthSel]} — ${item.name}</span>
+          ${delBtn}
+        </div>
+        <iframe src="${item.url}#toolbar=0&navpanes=0&scrollbar=0" style="width:100%;height:600px;border:none;display:block"></iframe>
+      </div>`;
+    } else {
+      g.innerHTML=`<div style="border-radius:var(--rlg);overflow:hidden;box-shadow:var(--sh);position:relative;background:#111">
+        <div style="background:var(--green);padding:7px 12px;display:flex;align-items:center;gap:6px">
+          <span style="font-size:12px;color:#fff;flex:1">📅 ${KYTCAL_MONTHS_FULL[kytCalMonthSel]} — ${item.name}</span>
+          ${delBtn}
+        </div>
+        <img src="${item.url}" style="width:100%;display:block;object-fit:contain;cursor:pointer" onclick="openKytFull('${item.url}')">
+      </div>`;
+    }
   } else {
     g.innerHTML=`<div class="ph" style="padding:28px">
       <div class="phic">📅</div>
       <div class="phtit" style="font-size:14px">เดือน${KYTCAL_MONTHS_FULL[kytCalMonthSel]} — ยังไม่มีไฟล์</div>
-      <div class="phdesc">${adminOn?'กด "อัปโหลด PDF ปฏิทิน KYT" ด้านบน':'ยังไม่มีปฏิทิน KYT เดือนนี้'}</div>
+      <div class="phdesc">${adminOn?'กด "อัปโหลด" ด้านบน (รองรับรูปภาพและ PDF)':'ยังไม่มีปฏิทิน KYT เดือนนี้'}</div>
     </div>`;
   }
 }
