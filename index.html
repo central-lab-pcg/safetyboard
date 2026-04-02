@@ -121,6 +121,12 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(
 .nmtitle{font-size:13px;font-weight:500;line-height:1.4}
 .nmdate{font-size:11px;color:var(--text3);margin-top:2px}
 
+.cald.sun{background:#f8f8f8;color:#bbb;cursor:default!important}
+.cald.holiday{background:#fde8ff;border-color:#d8a0e8!important;color:#7c3aed;cursor:default!important}
+.cald-num{font-size:10px;font-family:'IBM Plex Mono',monospace;display:block;line-height:1}
+.cald-tick{font-size:10px;display:block;text-align:center;color:var(--green);font-weight:700;line-height:1;margin-top:1px}
+.cald-hol{font-size:8px;display:block;text-align:center;line-height:1;margin-top:1px}
+
 /* STATS */
 .sgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
 @media(min-width:500px){.sgrid{grid-template-columns:repeat(4,1fr)}}
@@ -347,6 +353,26 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(
     <div class="ph" style="padding:24px"><div class="phic">👁️</div><div class="phtit" style="font-size:14px">KYT ประจำสัปดาห์</div><div class="phdesc">Admin อัปโหลดรูปภาพ KYT ได้เลย</div></div>
   </div>
 
+  <!-- KYT ปฏิทินประจำปี -->
+  <div class="sec-lbl" style="margin-top:14px">📅 ปฏิทิน KYT ประจำปี 2569</div>
+  <div id="ukytcal" class="usec" style="margin-bottom:8px">
+    <div class="utitle">Admin — อัปโหลดปฏิทิน KYT ประจำปี (PDF)</div>
+    <div class="ahint">อัปโหลดไฟล์ PDF ปฏิทิน KYT รายปี — แสดงแยกตามเดือน กดแท็บเดือนเพื่อเปลี่ยน</div>
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+      <label class="bsave" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:12px;padding:6px 14px">
+        📎 อัปโหลด PDF ปฏิทิน KYT
+        <input type="file" accept=".pdf" multiple style="display:none" onchange="handleKytCalPdf(event)">
+      </label>
+      <button class="bsave" onclick="deleteKytCalPdf()" style="background:var(--red);border-color:var(--red);font-size:12px;padding:6px 14px">🗑 ลบไฟล์ที่เลือก</button>
+    </div>
+  </div>
+  <div class="card" style="padding:12px">
+    <div id="kytcal-tabs" style="display:flex;overflow-x:auto;gap:4px;margin-bottom:12px;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px"></div>
+    <div id="kytcal-grid">
+      <div class="ph" style="padding:24px"><div class="phic">📅</div><div class="phtit" style="font-size:14px">ปฏิทิน KYT ประจำปี</div><div class="phdesc">Admin อัปโหลด PDF ได้เลย (รองรับหลายไฟล์แยกตามเดือน)</div></div>
+    </div>
+  </div>
+
   <!-- NEWS LIST -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;margin-top:4px">
     <div class="sec-lbl" style="margin:0">📰 ข่าวสารล่าสุด</div>
@@ -358,26 +384,21 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(
 <!-- ══ ปฏิทิน ══ -->
 <div class="sec" id="tab-calendar">
   <div class="apanel" id="calpanel">
-    <strong>🔧 Admin Mode เปิดอยู่</strong> — คลิกวันในปฏิทินเพื่อเปลี่ยนสถานะ
-    <div class="ahint">คลิก 1 = ✅ ปลอดภัย &nbsp;|&nbsp; คลิก 2 = ⚠️ อุบัติเหตุเล็กน้อย &nbsp;|&nbsp; คลิก 3 = 🔴 หยุดงาน &nbsp;|&nbsp; คลิก 4 = ล้างค่า</div>
+    <strong>🔧 Admin Mode</strong> — คลิกวันเพื่อเปลี่ยนสถานะ (ติ๊กอัตโนมัติยกเว้นวันอาทิตย์และวันหยุด)
+    <div class="ahint">คลิก 1 = ✅ ปลอดภัย &nbsp;|&nbsp; คลิก 2 = ⚠️ เหตุเล็กน้อย &nbsp;|&nbsp; คลิก 3 = 🔴 หยุดงาน &nbsp;|&nbsp; คลิก 4 = ล้างค่า</div>
   </div>
   <div class="calleg">
-    <div class="clli"><div class="clbox" style="background:#d1eeda;border:1px solid #a0d4b0"></div>ปลอดอุบัติเหตุ</div>
-    <div class="clli"><div class="clbox" style="background:#fef5e4;border:1px solid #f0d080"></div>เหตุเล็กน้อย</div>
-    <div class="clli"><div class="clbox" style="background:#fdecea;border:1px solid #f0b0a8"></div>หยุดงาน</div>
-    <div class="clli"><div class="clbox" style="background:var(--bg3);border:1px solid var(--brd)"></div>ยังไม่มีข้อมูล</div>
+    <div class="clli"><div class="clbox" style="background:#d1eeda;border:1px solid #a0d4b0"></div>✅ ปลอดอุบัติเหตุ</div>
+    <div class="clli"><div class="clbox" style="background:#fef5e4;border:1px solid #f0d080"></div>⚠️ เหตุเล็กน้อย</div>
+    <div class="clli"><div class="clbox" style="background:#fdecea;border:1px solid #f0b0a8"></div>🔴 หยุดงาน</div>
+    <div class="clli"><div class="clbox" style="background:#fde8ff;border:1px solid #d8a0e8"></div>📅 วันหยุดนักขัตฤกษ์</div>
+    <div class="clli"><div class="clbox" style="background:#f0f0f0;border:1px solid #ccc"></div>อาทิตย์/ยังไม่มีข้อมูล</div>
   </div>
   <div class="calyear" id="fullcal"></div>
 </div>
 
 <!-- ══ นโยบาย ══ -->
 <div class="sec" id="tab-policy">
-  <div class="sgrid">
-    <div class="sc grn"><div class="slbl">อุบัติเหตุ ม.ค. 2569</div><div class="sval">0</div><div class="sunit">Zero Accident ✅</div></div>
-    <div class="sc"><div class="slbl">IFR</div><div class="sval bl">0.0</div><div class="sunit">per million hrs</div></div>
-    <div class="sc"><div class="slbl">ISR</div><div class="sval bl">0.0</div><div class="sunit">per million hrs</div></div>
-    <div class="sc"><div class="slbl">ห้องพยาบาล ม.ค.</div><div class="sval yl">441</div><div class="sunit">ครั้ง</div></div>
-  </div>
   <div class="card">
     <div class="ctitle"><span class="cbar"></span>เอกสารนโยบาย</div>
     <div class="lgrid">
@@ -395,10 +416,17 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(
 
 <!-- ══ KPI ══ -->
 <div class="sec" id="tab-kpi">
-  <div id="ukpi" class="usec"><div class="utitle">📤 Admin — อัปโหลด KPI</div>
-    <label class="ubox" style="display:inline-block;cursor:pointer;"><div class="uico">📎</div><div class="uname">เลือกไฟล์ PDF KPI</div><input type="file" accept=".pdf" onchange="loadFile(this,'kpiframe')"></label></div>
-  <div class="card"><div class="ctitle"><span class="cbar"></span>เป้าหมาย KPI ด้านความปลอดภัย</div>
-    <div id="kpiframe"><div class="ph"><div class="phic">🎯</div><div class="phtit">รอไฟล์ PDF KPI</div><div class="phdesc">เปิด Admin Mode แล้วอัปโหลด</div></div></div></div>
+  <div id="ukpi" class="usec">
+    <div class="utitle">📤 Admin — อัปโหลด KPI</div>
+    <label class="ubox" style="display:inline-block;cursor:pointer;max-width:180px">
+      <div class="uico">🎯</div><div class="uname">เลือกไฟล์ PDF</div>
+      <input type="file" accept=".pdf" onchange="loadFileSingle(this,'kpiframe','kpi')">
+    </label>
+  </div>
+  <div class="card">
+    <div class="ctitle"><span class="cbar"></span>เป้าหมาย KPI ด้านความปลอดภัย</div>
+    <div id="kpiframe"><div class="ph"><div class="phic">🎯</div><div class="phtit">รอไฟล์ PDF KPI</div><div class="phdesc">เปิด Admin Mode แล้วอัปโหลด</div></div></div>
+  </div>
 </div>
 
 <!-- ══ แผนงาน ══ -->
@@ -419,28 +447,30 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(
 <div class="sec" id="tab-report">
   <div class="twocol">
     <div>
-      <div class="card"><div class="ctitle"><span class="cbar"></span>รายงาน คปอ. 2/2569</div>
-        <div class="sgrid">
-          <div class="sc grn"><div class="slbl">อุบัติเหตุ ม.ค.</div><div class="sval">0</div><div class="sunit">Zero ✅</div></div>
-          <div class="sc"><div class="slbl">กรรมการ</div><div class="sval bl">29</div><div class="sunit">คน</div></div>
+      <div class="card">
+        <div class="ctitle"><span class="cbar"></span>รายงาน คปอ.</div>
+        <div id="ucpo" class="usec" style="margin-bottom:10px">
+          <label style="cursor:pointer;font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:6px">
+            📎 อัปโหลด PDF รายงาน คปอ.
+            <input type="file" accept=".pdf" style="display:none" onchange="loadFileSingle(this,'cpoframe','cpo')">
+          </label>
         </div>
-        <div style="background:var(--greenpale);border-radius:var(--r);padding:11px;margin-bottom:11px;font-size:12px;line-height:1.9;">✅ IFR/ISR/LTIFR = 0.0<br>✅ KPI Safety: Zero Accident<br>✅ น้ำเสีย BOD/TSS/Oil &amp; Grease อยู่ในมาตรฐาน<br>⚡ ติดตามอุปกรณ์ AED</div>
-        <div id="ucpo" class="usec" style="margin-bottom:0"><label style="cursor:pointer;font-size:12px;font-weight:600;color:var(--green);">📎 อัปโหลด PDF รายงาน คปอ.<input type="file" accept=".pdf" style="display:none" onchange="loadFile(this,'cpoframe')"></label></div>
-        <div id="cpoframe"></div>
+        <div id="cpoframe"><div class="ph"><div class="phic">📊</div><div class="phtit">รอไฟล์รายงาน คปอ.</div></div></div>
+        <div id="cpo-history" style="margin-top:10px"></div>
       </div>
     </div>
     <div>
-      <div class="card"><div class="ctitle"><span class="cbar" style="background:var(--blue)"></span>สถิติห้องพยาบาล ม.ค. 2569</div>
-        <div class="sgrid">
-          <div class="sc grn"><div class="slbl">รวมบริการ</div><div class="sval">441</div></div>
-          <div class="sc"><div class="slbl">ใบส่งตัว</div><div class="sval bl">205</div></div>
-          <div class="sc"><div class="slbl">ชาย/หญิง</div><div class="sval" style="font-size:16px;color:var(--text)">221/220</div></div>
-          <div class="sc"><div class="slbl">ท้องเสีย</div><div class="sval yl">4</div></div>
-        </div>
-        <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:7px;text-transform:uppercase;letter-spacing:.4px;">5 อันดับระบบโรค</div>
+      <div class="card">
+        <div class="ctitle"><span class="cbar" style="background:var(--blue)"></span>สถิติห้องพยาบาล</div>
         <div id="dischart"></div>
-        <div id="unurse" class="usec" style="margin-top:10px;margin-bottom:0"><label style="cursor:pointer;font-size:12px;font-weight:600;color:var(--green);">📎 อัปโหลด PDF สถิติพยาบาล<input type="file" accept=".pdf" style="display:none" onchange="loadFile(this,'nurseframe')"></label></div>
-        <div id="nurseframe"></div>
+        <div id="unurse" class="usec" style="margin-top:10px;margin-bottom:0">
+          <label style="cursor:pointer;font-size:12px;font-weight:600;color:var(--green);display:inline-flex;align-items:center;gap:6px">
+            📎 อัปโหลด PDF สถิติพยาบาล
+            <input type="file" accept=".pdf" style="display:none" onchange="loadFileSingle(this,'nurseframe','nurse')">
+          </label>
+        </div>
+        <div id="nurseframe"><div class="ph"><div class="phic">🏥</div><div class="phtit">รอไฟล์สถิติพยาบาล</div></div></div>
+        <div id="nurse-history" style="margin-top:10px"></div>
       </div>
     </div>
   </div>
@@ -448,34 +478,66 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(
 
 <!-- ══ ผลตรวจ ══ -->
 <div class="sec" id="tab-audit">
-  <div id="uaudit" class="usec"><div class="utitle">📤 Admin — อัปโหลดผลตรวจ</div>
-    <label class="ubox" style="display:inline-block;cursor:pointer;"><div class="uico">🔍</div><div class="uname">เลือกไฟล์ PDF</div><input type="file" accept=".pdf" onchange="loadFile(this,'auditframe')"></label></div>
-  <div class="card"><div class="ctitle"><span class="cbar" style="background:var(--yel)"></span>ผลตรวจประเมินพื้นที่โดย คปอ.</div>
-    <div id="auditframe"><div class="ph"><div class="phic">🔍</div><div class="phtit">รอไฟล์ผลตรวจประเมิน</div></div></div></div>
+  <div id="uaudit" class="usec">
+    <div class="utitle">📤 Admin — อัปโหลดผลตรวจ</div>
+    <label class="ubox" style="display:inline-block;cursor:pointer;max-width:180px">
+      <div class="uico">🔍</div><div class="uname">เลือกไฟล์ PDF</div>
+      <input type="file" accept=".pdf" onchange="loadFileSingle(this,'auditframe','audit')">
+    </label>
+  </div>
+  <div class="card">
+    <div class="ctitle"><span class="cbar" style="background:var(--yel)"></span>ผลตรวจประเมินพื้นที่โดย คปอ.</div>
+    <div id="auditframe"><div class="ph"><div class="phic">🔍</div><div class="phtit">รอไฟล์ผลตรวจประเมิน</div></div></div>
+    <div id="audit-history" style="margin-top:10px"></div>
+  </div>
 </div>
 
 <!-- ══ NCR ══ -->
 <div class="sec" id="tab-ncr">
-  <div id="uncr" class="usec"><div class="utitle">📤 Admin — อัปโหลด NCR</div>
-    <label class="ubox" style="display:inline-block;cursor:pointer;"><div class="uico">⚠️</div><div class="uname">เลือกไฟล์ PDF</div><input type="file" accept=".pdf" onchange="loadFile(this,'ncrframe')"></label></div>
-  <div class="card"><div class="ctitle"><span class="cbar" style="background:var(--red)"></span>รายงานสิ่งผิดปกติ</div>
-    <div id="ncrframe"><div class="ph"><div class="phic">⚠️</div><div class="phtit">รอไฟล์รายงานผิดปกติ</div></div></div></div>
+  <div id="uncr" class="usec">
+    <div class="utitle">📤 Admin — อัปโหลด NCR</div>
+    <label class="ubox" style="display:inline-block;cursor:pointer;max-width:180px">
+      <div class="uico">⚠️</div><div class="uname">เลือกไฟล์ PDF</div>
+      <input type="file" accept=".pdf" onchange="loadFileSingle(this,'ncrframe','ncr')">
+    </label>
+  </div>
+  <div class="card">
+    <div class="ctitle"><span class="cbar" style="background:var(--red)"></span>รายงานสิ่งผิดปกติ</div>
+    <div id="ncrframe"><div class="ph"><div class="phic">⚠️</div><div class="phtit">รอไฟล์รายงานผิดปกติ</div></div></div>
+    <div id="ncr-history" style="margin-top:10px"></div>
+  </div>
 </div>
 
 <!-- ══ Kaizen ══ -->
 <div class="sec" id="tab-kaizen">
-  <div id="ukaizen" class="usec"><div class="utitle">📤 Admin — อัปโหลด Kaizen</div>
-    <label class="ubox" style="display:inline-block;cursor:pointer;"><div class="uico">💡</div><div class="uname">เลือกไฟล์ PDF</div><input type="file" accept=".pdf" onchange="loadFile(this,'kaizenframe')"></label></div>
-  <div class="card"><div class="ctitle"><span class="cbar" style="background:var(--yel)"></span>Kaizen / ข้อเสนอแนะ</div>
-    <div id="kaizenframe"><div class="ph"><div class="phic">💡</div><div class="phtit">รอไฟล์ Kaizen</div></div></div></div>
+  <div id="ukaizen" class="usec">
+    <div class="utitle">📤 Admin — อัปโหลด Kaizen</div>
+    <label class="ubox" style="display:inline-block;cursor:pointer;max-width:180px">
+      <div class="uico">💡</div><div class="uname">เลือกไฟล์ PDF</div>
+      <input type="file" accept=".pdf" onchange="loadFileSingle(this,'kaizenframe','kaizen')">
+    </label>
+  </div>
+  <div class="card">
+    <div class="ctitle"><span class="cbar" style="background:var(--yel)"></span>Kaizen / ข้อเสนอแนะ</div>
+    <div id="kaizenframe"><div class="ph"><div class="phic">💡</div><div class="phtit">รอไฟล์ Kaizen</div></div></div>
+    <div id="kaizen-history" style="margin-top:10px"></div>
+  </div>
 </div>
 
 <!-- ══ วัฒนธรรม ══ -->
 <div class="sec" id="tab-culture">
-  <div id="uculture" class="usec"><div class="utitle">📤 Admin — อัปโหลดวัฒนธรรม PCG</div>
-    <label class="ubox" style="display:inline-block;cursor:pointer;"><div class="uico">🏅</div><div class="uname">เลือกไฟล์ PDF</div><input type="file" accept=".pdf" onchange="loadFile(this,'cultureframe')"></label></div>
-  <div class="card"><div class="ctitle"><span class="cbar" style="background:#7c3aed"></span>วัฒนธรรมความปลอดภัยในหัวใจ PCG</div>
-    <div id="cultureframe"><div class="ph"><div class="phic">🏅</div><div class="phtit">รอไฟล์วัฒนธรรม</div></div></div></div>
+  <div id="uculture" class="usec">
+    <div class="utitle">📤 Admin — อัปโหลดวัฒนธรรม PCG</div>
+    <label class="ubox" style="display:inline-block;cursor:pointer;max-width:180px">
+      <div class="uico">🏅</div><div class="uname">เลือกไฟล์ PDF</div>
+      <input type="file" accept=".pdf" onchange="loadFileSingle(this,'cultureframe','culture')">
+    </label>
+  </div>
+  <div class="card">
+    <div class="ctitle"><span class="cbar" style="background:#7c3aed"></span>วัฒนธรรมความปลอดภัยในหัวใจ PCG</div>
+    <div id="cultureframe"><div class="ph"><div class="phic">🏅</div><div class="phtit">รอไฟล์วัฒนธรรม</div></div></div>
+    <div id="culture-history" style="margin-top:10px"></div>
+  </div>
 </div>
 
 <!-- ══ Admin Upload Hub ══ -->
@@ -601,6 +663,8 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(
   </div>
 </div>
 
+<!-- (KYT calendar note modal removed — now PDF-based) -->
+
 <script>
 const MTHAI=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 const MSHORT=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
@@ -612,7 +676,7 @@ const TGBG={safety:'#e8f5ed',health:'#e8f4fd',event:'#fef5e4',alert:'#fdecea'};
 let adminOn=false, slideIdx=0, kytIdx=0;
 const START=new Date('2026-01-01');
 let calData={};
-for(let d=1;d<=31;d++) calData[`2026-1-${d}`]='safe';
+// Auto-tick handled in buildCal()
 
 // temp file blobs for news
 let newsFilePending=null; // {type:'pdf'|'img', url, name}
@@ -664,6 +728,7 @@ function toggleAdmin(){
     document.getElementById('calpanel').classList.remove('show');
     document.getElementById('addnewsbtn').classList.remove('show');
     renderMini(); renderHero(); renderKyt(); renderSS();
+    ['kpi','cpo','nurse','audit','ncr','kaizen','culture'].forEach(k=>{if(fileStore[k]&&fileStore[k].length)renderFileSection(k+'frame',k);});
   } else {
     // show login modal
     document.getElementById('login-pass').value='';
@@ -683,6 +748,7 @@ function doLogin(){
     document.getElementById('addnewsbtn').classList.add('show');
     closeModal('mlogin');
     renderMini(); renderHero(); renderKyt(); renderSS();
+    ['kpi','cpo','nurse','audit','ncr','kaizen','culture'].forEach(k=>{if(fileStore[k]&&fileStore[k].length)renderFileSection(k+'frame',k);});
   } else {
     document.getElementById('login-err').style.display='block';
     document.getElementById('login-pass').value='';
@@ -690,13 +756,7 @@ function doLogin(){
   }
 }
 
-// FILE UPLOAD (generic for tabs)
-function loadFile(inp,tid){
-  const f=inp.files[0]; if(!f) return;
-  const url=URL.createObjectURL(f);
-  document.getElementById(tid).innerHTML=`<div class="ifrwrap"><div class="ifrbar"><div class="idot" style="background:#ff5f57"></div><div class="idot" style="background:#febc2e"></div><div class="idot" style="background:#28c840"></div><span style="margin-left:6px;">📄 ${f.name}</span></div><iframe src="${url}" style="width:100%;height:480px;border:none;display:block;"></iframe></div>`;
-}
-function setst(id,inp){const e=document.getElementById(id);if(e&&inp.files[0])e.textContent='✅ '+inp.files[0].name;}
+// (loadFile and setst are defined in the new file management section below)
 
 // NEWS FILE UPLOAD (PDF or Image)
 function handleNewsFile(e){
@@ -911,10 +971,36 @@ function openKytFull(url){
   openModal('mkytfull');
 }
 
-// CALENDAR
+// ─── HOLIDAYS 2026 (วันหยุดนักขัตฤกษ์) ───
+const HOLIDAYS_2026=new Set([
+  '2026-1-1','2026-2-17',
+  '2026-4-13','2026-4-14','2026-4-15','2026-4-16',
+  '2026-5-1',
+  '2026-6-3',
+  '2026-7-28','2026-7-29',
+  '2026-8-12',
+  '2026-10-12','2026-10-13','2026-10-23',
+  '2026-12-5','2026-12-30','2026-12-31'
+]);
+
+// ─── CALENDAR with auto-tick ───
 function buildCal(){
   const w=document.getElementById('fullcal'); w.innerHTML='';
-  const today=new Date();
+  const today=new Date(); today.setHours(0,0,0,0);
+  // Auto-tick past & today workdays not yet marked
+  MTHAI.forEach((mn,m)=>{
+    const days=new Date(2026,m+1,0).getDate();
+    for(let d=1;d<=days;d++){
+      const dt=new Date(2026,m,d); dt.setHours(0,0,0,0);
+      const key=`2026-${m+1}-${d}`;
+      const dow=dt.getDay(); // 0=Sun
+      const isHol=HOLIDAYS_2026.has(key);
+      if(dt<=today && dow!==0 && !isHol && !calData[key]){
+        calData[key]='safe';
+      }
+    }
+  });
+
   MTHAI.forEach((mn,m)=>{
     const c=document.createElement('div'); c.className='calmo';
     c.innerHTML=`<div class="calmoh">${mn} 2569</div><div class="caldow">${['อา','จ','อ','พ','พฤ','ศ','ส'].map(d=>`<div class="caldowc">${d}</div>`).join('')}</div>`;
@@ -922,17 +1008,42 @@ function buildCal(){
     const first=new Date(2026,m,1).getDay(), days=new Date(2026,m+1,0).getDate();
     for(let i=0;i<first;i++){const e=document.createElement('div');e.className='cald empty';g.appendChild(e);}
     for(let d=1;d<=days;d++){
-      const key=`2026-${m+1}-${d}`, cell=document.createElement('div');
-      cell.textContent=d; cell.className='cald';
+      const key=`2026-${m+1}-${d}`;
+      const dt=new Date(2026,m,d); dt.setHours(0,0,0,0);
+      const dow=dt.getDay();
+      const isHol=HOLIDAYS_2026.has(key);
+      const isSun=dow===0;
+      const cell=document.createElement('div');
+      cell.className='cald';
+      // Sunday style
+      if(isSun) cell.classList.add('sun');
+      // Holiday style
+      else if(isHol) cell.classList.add('holiday');
+      // Status
       const st=calData[key]; if(st) cell.classList.add(st);
+      // Today border
       if(today.getFullYear()===2026&&today.getMonth()===m&&today.getDate()===d) cell.classList.add('today');
+
+      // Cell content: date + tick/mark
+      let inner=`<span class="cald-num">${d}</span>`;
+      if(isHol){
+        inner+=`<span class="cald-hol">🎌</span>`;
+      } else if(!isSun && st==='safe'){
+        inner+=`<span class="cald-tick">✓</span>`;
+      } else if(!isSun && st==='incident'){
+        inner+=`<span class="cald-tick" style="color:#a07000">!</span>`;
+      } else if(!isSun && st==='lost'){
+        inner+=`<span class="cald-tick" style="color:#8b1a14">✕</span>`;
+      }
+      cell.innerHTML=inner;
+
       cell.addEventListener('click',()=>{
-        if(!adminOn) return;
+        if(!adminOn||isSun||isHol) return;
         const cy=[null,'safe','incident','lost'];
         const nx=cy[(cy.indexOf(calData[key]||null)+1)%cy.length];
-        cell.className='cald'; if(nx){calData[key]=nx;cell.classList.add(nx);}else delete calData[key];
-        if(today.getFullYear()===2026&&today.getMonth()===m&&today.getDate()===d) cell.classList.add('today');
-        calcDays();
+        calData[key]=nx||undefined;
+        if(!nx) delete calData[key];
+        buildCal(); calcDays();
       });
       g.appendChild(cell);
     }
@@ -940,10 +1051,137 @@ function buildCal(){
   });
 }
 
-// DISEASE CHART
-function buildDis(){
-  const data=[{n:'ทางเดินหายใจ',v:74},{n:'ทางเดินอาหาร',v:42},{n:'ระบบประสาท',v:25},{n:'กล้ามเนื้อ/กระดูก',v:24},{n:'ตา/หู/จมูก',v:17}];
-  document.getElementById('dischart').innerHTML=data.map(d=>`<div class="brow"><div class="blrow"><span>${d.n}</span><span class="bv">${d.v}</span></div><div class="btrack"><div class="bfill" style="width:${Math.round(d.v/74*100)}%"></div></div></div>`).join('');
+// ─── FILE UPLOAD with history/delete ───
+const fileStore={};
+function loadFileSingle(inp,tid,key){
+  const f=inp.files[0]; if(!f) return;
+  const url=URL.createObjectURL(f);
+  const ts=new Date().toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});
+  if(!fileStore[key]) fileStore[key]=[];
+  // push to history
+  fileStore[key].unshift({url,name:f.name,ts});
+  renderFileSection(tid,key);
+}
+function renderFileSection(tid,key){
+  const files=fileStore[key]||[];
+  const frame=document.getElementById(tid);
+  const hist=document.getElementById(key+'-history');
+  if(!files.length){
+    frame.innerHTML=`<div class="ph"><div class="phic">📄</div><div class="phtit">รอไฟล์</div></div>`;
+    if(hist) hist.innerHTML='';
+    return;
+  }
+  // show current (first)
+  const cur=files[0];
+  const delBtn=adminOn?`<button onclick="deleteFileCurrent('${tid}','${key}')" style="margin-left:auto;background:#c0392b;border:none;color:#fff;padding:4px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🗑 ลบ</button>`:'';
+  frame.innerHTML=`<div class="ifrwrap"><div class="ifrbar"><div class="idot" style="background:#ff5f57"></div><div class="idot" style="background:#febc2e"></div><div class="idot" style="background:#28c840"></div><span style="margin-left:6px;flex:1">📄 ${cur.name}</span><span style="font-size:10px;opacity:.7;margin-right:6px">${cur.ts}</span>${delBtn}</div><iframe src="${cur.url}" style="width:100%;height:500px;border:none;display:block"></iframe></div>`;
+  // show history
+  if(hist && files.length>1){
+    hist.innerHTML=`<div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">📋 ไฟล์ก่อนหน้า</div>`+
+      files.slice(1).map((f,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#fff;border:1px solid var(--brd);border-radius:8px;margin-bottom:6px;cursor:pointer" onclick="viewOldFile('${key}',${i+1})">
+        <span style="font-size:13px">📄</span>
+        <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
+        <span style="font-size:10px;color:var(--text3)">${f.ts}</span>
+        ${adminOn?`<button onclick="event.stopPropagation();deleteFileOld('${tid}','${key}',${i+1})" style="background:#c0392b;border:none;color:#fff;width:20px;height:20px;border-radius:50%;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">×</button>`:''}
+      </div>`).join('');
+  } else if(hist){ hist.innerHTML=''; }
+}
+function deleteFileCurrent(tid,key){
+  if(!adminOn||!fileStore[key]||!fileStore[key].length) return;
+  if(!confirm('ลบไฟล์ปัจจุบันออก? ไฟล์ก่อนหน้าจะถูกแสดงแทน')) return;
+  fileStore[key].shift();
+  renderFileSection(tid,key);
+}
+function deleteFileOld(tid,key,idx){
+  if(!adminOn) return;
+  if(!confirm('ลบไฟล์นี้ออก?')) return;
+  fileStore[key].splice(idx,1);
+  renderFileSection(tid,key);
+}
+function viewOldFile(key,idx){
+  const f=fileStore[key][idx]; if(!f) return;
+  window.open(f.url,'_blank');
+}
+
+// Legacy loadFile (for plan tab)
+function loadFile(inp,tid){
+  const f=inp.files[0]; if(!f) return;
+  const url=URL.createObjectURL(f);
+  document.getElementById(tid).innerHTML=`<div class="ifrwrap"><div class="ifrbar"><div class="idot" style="background:#ff5f57"></div><div class="idot" style="background:#febc2e"></div><div class="idot" style="background:#28c840"></div><span style="margin-left:6px;">📄 ${f.name}</span></div><iframe src="${url}" style="width:100%;height:480px;border:none;display:block;"></iframe></div>`;
+}
+function setst(id,inp){const e=document.getElementById(id);if(e&&inp.files[0])e.textContent='✅ '+inp.files[0].name;}
+
+// ─── KYT ANNUAL CALENDAR — PDF per month ───
+let kytCalPdfs=[];   // [{url, name, month}]  month: 0-11
+let kytCalMonthSel=3; // default April
+
+const KYTCAL_MONTHS_SHORT=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const KYTCAL_MONTHS_FULL=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+function handleKytCalPdf(e){
+  const files=Array.from(e.target.files); if(!files.length) return;
+  files.forEach(f=>{
+    const url=URL.createObjectURL(f);
+    // Try to detect month from filename, else assign to current selected month
+    let m=kytCalMonthSel;
+    KYTCAL_MONTHS_FULL.forEach((mn,i)=>{ if(f.name.includes(mn)||f.name.includes(KYTCAL_MONTHS_SHORT[i])) m=i; });
+    // Remove existing for same month, then add
+    kytCalPdfs=kytCalPdfs.filter(p=>p.month!==m);
+    kytCalPdfs.push({url, name:f.name, month:m});
+    kytCalMonthSel=m;
+  });
+  buildKytCalTabs();
+  buildKytCalGrid();
+}
+
+function deleteKytCalPdf(){
+  if(!adminOn) return;
+  const has=kytCalPdfs.find(p=>p.month===kytCalMonthSel);
+  if(!has){alert('ไม่มีไฟล์ในเดือนนี้');return;}
+  if(!confirm(`ลบ PDF เดือน ${KYTCAL_MONTHS_FULL[kytCalMonthSel]} ออก?`)) return;
+  kytCalPdfs=kytCalPdfs.filter(p=>p.month!==kytCalMonthSel);
+  buildKytCalGrid();
+}
+
+function buildKytCalTabs(){
+  const tabs=document.getElementById('kytcal-tabs'); if(!tabs) return;
+  tabs.innerHTML=KYTCAL_MONTHS_SHORT.map((mn,i)=>{
+    const hasFile=kytCalPdfs.some(p=>p.month===i);
+    const isAct=kytCalMonthSel===i;
+    return `<button onclick="kytCalSwitch(${i})" style="flex-shrink:0;padding:6px 12px;border-radius:20px;border:1.5px solid ${isAct?'var(--green)':'var(--brd)'};background:${isAct?'var(--green)':'#fff'};color:${isAct?'#fff':'var(--text2)'};font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;position:relative">
+      ${mn}${hasFile?`<span style="position:absolute;top:2px;right:4px;width:6px;height:6px;border-radius:50%;background:${isAct?'#a0ffb8':'var(--green)'}"></span>`:''}
+    </button>`;
+  }).join('');
+}
+
+function kytCalSwitch(m){
+  kytCalMonthSel=m;
+  buildKytCalTabs();
+  buildKytCalGrid();
+}
+
+function buildKytCalGrid(){
+  const g=document.getElementById('kytcal-grid'); if(!g) return;
+  const pdf=kytCalPdfs.find(p=>p.month===kytCalMonthSel);
+  const delBtn=adminOn&&pdf?`<button onclick="deleteKytCalPdf()" style="background:#c0392b;border:none;color:#fff;padding:4px 11px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;margin-left:8px">🗑 ลบ</button>`:'';
+  if(pdf){
+    g.innerHTML=`<div class="ifrwrap">
+      <div class="ifrbar">
+        <div class="idot" style="background:#ff5f57"></div>
+        <div class="idot" style="background:#febc2e"></div>
+        <div class="idot" style="background:#28c840"></div>
+        <span style="margin-left:6px;flex:1">📅 ${KYTCAL_MONTHS_FULL[kytCalMonthSel]} 2569 — ${pdf.name}</span>
+        ${delBtn}
+      </div>
+      <iframe src="${pdf.url}#toolbar=0&navpanes=0&scrollbar=0" style="width:100%;height:600px;border:none;display:block"></iframe>
+    </div>`;
+  } else {
+    g.innerHTML=`<div class="ph" style="padding:28px">
+      <div class="phic">📅</div>
+      <div class="phtit" style="font-size:14px">เดือน${KYTCAL_MONTHS_FULL[kytCalMonthSel]} — ยังไม่มีไฟล์</div>
+      <div class="phdesc">${adminOn?'กด "อัปโหลด PDF ปฏิทิน KYT" ด้านบน':'ยังไม่มีปฏิทิน KYT เดือนนี้'}</div>
+    </div>`;
+  }
 }
 
 // MODALS
@@ -998,6 +1236,7 @@ function saveHero(){
 
 // INIT
 renderSS(); renderMini(); renderKyt(); renderHero(); buildCal(); buildDis();
+buildKytCalTabs(); buildKytCalGrid();
 </script>
 </body>
 </html>
