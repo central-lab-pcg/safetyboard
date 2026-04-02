@@ -1513,6 +1513,12 @@ async function saveHero(){
 
 // ─── INIT — load everything from Firestore ───
 async function loadFromFirebase(){
+  // Safety timeout — hide loading after 5 seconds no matter what
+  const timeout=setTimeout(()=>{
+    const ov=document.getElementById('fb-loading');
+    if(ov) ov.style.display='none';
+  }, 5000);
+
   try{
     // News
     const nd=await db.collection('settings').doc('news').get();
@@ -1555,7 +1561,11 @@ async function loadFromFirebase(){
       }
     }));
 
-  } catch(e){ console.warn('Firebase load error:',e); }
+  } catch(e){
+    console.warn('Firebase load error:',e.message);
+  }
+
+  clearTimeout(timeout);
 
   // Render everything
   renderSS(); renderMini(); renderKyt(); renderHero(); buildCal(); buildDis();
