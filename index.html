@@ -59,20 +59,21 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(
 .ctitle{font-size:13px;font-weight:700;color:var(--green);margin-bottom:14px;display:flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.5px}
 .cbar{width:4px;height:16px;background:var(--green);border-radius:2px;flex-shrink:0}
 
-/* NEWS SLIDESHOW — A4 ratio (1:1.414) */
-.ssw{position:relative;border-radius:var(--rlg);overflow:hidden;background:#f5f5f0;margin-bottom:14px;box-shadow:var(--sh);aspect-ratio:1/1.414;width:100%}
-.sld{display:none;position:absolute;inset:0}
+/* NEWS SLIDESHOW */
+.ssw{border-radius:var(--rlg);overflow:hidden;background:#f5f5f0;margin-bottom:14px;box-shadow:var(--sh);width:100%;position:relative}
+.sld{display:none;position:relative;width:100%;cursor:pointer;-webkit-tap-highlight-color:rgba(0,0,0,.08)}
 .sld.act{display:block;animation:sfade .5s ease}
 @keyframes sfade{from{opacity:0}to{opacity:1}}
-.sld-img{width:100%;height:100%;object-fit:contain;display:block;background:#fff}
-.sld-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;padding:20px}
-.sld-ov{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.75));padding:40px 16px 14px}
+.sld-img{width:100%;display:block;background:#fff;max-height:80vh;object-fit:contain}
+.sld-ph{width:100%;min-height:320px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;padding:20px}
+.sld-iframe{width:100%;height:80vh;border:none;display:block;background:#fff;pointer-events:none}
+.sld-ov{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(transparent,rgba(0,0,0,.75));padding:40px 16px 14px;pointer-events:none}
 .sld-tag{display:inline-block;background:var(--greenl);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;margin-bottom:6px}
 .sld-title{font-size:16px;font-weight:700;color:#fff;line-height:1.3;margin-bottom:4px}
 .sld-date{font-size:11px;color:rgba(255,255,255,.75)}
-.sarr{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.28);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;z-index:5}
+.sarr{position:absolute;top:40%;transform:translateY(-50%);background:rgba(0,0,0,.28);border:none;color:#fff;width:36px;height:36px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;z-index:15}
 .sprev{left:8px}.snext{right:8px}
-.sdots{position:absolute;bottom:10px;right:14px;display:flex;gap:5px;z-index:5}
+.sdots{position:absolute;bottom:10px;right:14px;display:flex;gap:5px;z-index:15}
 .sdot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.4);cursor:pointer;transition:all .2s}
 .sdot.act{background:#fff;width:18px;border-radius:4px}
 
@@ -216,6 +217,9 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(
 .movl{display:none;position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:500;align-items:flex-end;justify-content:center}
 @media(min-width:600px){.movl{align-items:center}}
 .movl.show{display:flex}
+/* News viewer — true fullscreen */
+#mnewsdetail{background:rgba(0,0,0,.95);align-items:stretch;justify-content:center;padding:0}
+#mnewsdetail.show{display:flex}
 .mbox{background:#fff;border-radius:var(--rlg) var(--rlg) 0 0;padding:20px;width:100%;max-width:480px;box-shadow:0 -4px 30px rgba(0,0,0,.18);max-height:92vh;overflow-y:auto}
 @media(min-width:600px){.mbox{border-radius:var(--rlg);max-height:85vh}}
 .mbox-handle{width:36px;height:4px;background:var(--brd2);border-radius:2px;margin:0 auto 14px}
@@ -633,16 +637,20 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(
   </div>
 </div>
 
-<!-- NEWS DETAIL MODAL -->
-<div class="movl" id="mnewsdetail">
-  <div class="mbox" style="max-width:560px">
-    <div class="mbox-handle"></div>
-    <div id="detail-tag" style="margin-bottom:8px"></div>
-    <div class="news-detail-title" id="detail-title"></div>
-    <div style="font-size:11px;color:var(--text3);margin-bottom:12px" id="detail-date"></div>
-    <div class="news-detail-body" id="detail-body"></div>
-    <div id="news-detail-pdf"></div>
-    <div class="mbtns"><button class="bcancel" onclick="closeModal('mnewsdetail')">ปิด</button></div>
+<!-- NEWS VIEWER MODAL — fullscreen image or PDF -->
+<div class="movl" id="mnewsdetail" style="background:rgba(0,0,0,.92);align-items:stretch;padding:0">
+  <div style="width:100%;height:100%;display:flex;flex-direction:column;max-width:800px;margin:0 auto;position:relative">
+    <!-- Header bar -->
+    <div style="background:var(--green);padding:10px 14px;display:flex;align-items:center;gap:10px;flex-shrink:0;z-index:10">
+      <div style="flex:1;min-width:0">
+        <div id="detail-tag" style="margin-bottom:3px"></div>
+        <div class="news-detail-title" id="detail-title" style="color:#fff;font-size:14px;font-weight:700;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+        <div style="font-size:10px;color:rgba(255,255,255,.7);margin-top:2px" id="detail-date"></div>
+      </div>
+      <button onclick="closeModal('mnewsdetail')" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">✕</button>
+    </div>
+    <!-- Content area -->
+    <div id="news-detail-content" style="flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;background:#111;min-height:0"></div>
   </div>
 </div>
 
@@ -888,7 +896,7 @@ function handleHeroImg(e){
   prev.src=heroImgPending; prev.style.display='block';
 }
 
-// SLIDESHOW — A4 ratio, full PDF page display
+// SLIDESHOW — block layout, fully clickable
 function renderSS(){
   const w=document.getElementById('ssw'); w.innerHTML='';
   if(!newsData.length){
@@ -896,32 +904,46 @@ function renderSS(){
     return;
   }
   newsData.forEach((n,i)=>{
-    const s=document.createElement('div'); s.className='sld'+(i===0?' act':'');
+    const s=document.createElement('div');
+    s.className='sld'+(i===0?' act':'');
     const bg=TGBG[n.tag]||'#e8f5ed';
-    // ปุ่มลบ — แสดงเฉพาะ Admin Mode
-    const delBtn=adminOn
-      ? `<button onclick="event.stopPropagation();deleteNews(${n.id})" style="position:absolute;top:10px;right:10px;z-index:10;background:#c0392b;border:none;color:#fff;padding:6px 13px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px">🗑 ลบ</button>`
-      : '';
+
+    let body='';
     if(n.pdfUrl){
-      s.innerHTML=`<iframe src="${n.pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&page=1&zoom=page-fit" style="width:100%;height:100%;border:none;display:block;position:absolute;inset:0;background:#fff" loading="lazy"></iframe>
-        <div style="position:absolute;top:10px;left:10px;background:rgba(192,57,43,.9);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;z-index:3">📄 PDF</div>
-        ${delBtn}
-        <div class="sld-ov" style="z-index:3"><div class="sld-tag">${TGLBL[n.tag]||n.tag}</div><div class="sld-title">${n.title}</div><div class="sld-date">${n.date}</div></div>`;
+      body=`<iframe src="${n.pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&page=1&zoom=page-fit" class="sld-iframe"></iframe>
+            <div style="position:absolute;top:10px;left:10px;background:rgba(192,57,43,.9);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;z-index:4;pointer-events:none">📄 PDF</div>`;
     } else if(n.img){
-      s.innerHTML=`<img src="${n.img}" class="sld-img" onerror="this.style.display='none';this.nextSibling.style.display='flex'"><div class="sld-ph" style="background:${bg};display:none;"><div style="font-size:50px">${TGICO[n.tag]}</div></div>
-        ${delBtn}
-        <div class="sld-ov"><div class="sld-tag">${TGLBL[n.tag]||n.tag}</div><div class="sld-title">${n.title}</div><div class="sld-date">${n.date}</div></div>`;
+      body=`<img src="${n.img}" class="sld-img">`;
     } else {
-      s.innerHTML=`<div class="sld-ph" style="background:${bg};"><div style="font-size:50px">${TGICO[n.tag]||'📰'}</div><div style="font-size:14px;color:#4a6857;font-weight:600;padding:0 36px;text-align:center">${n.title}</div></div>
-        ${delBtn}
-        <div class="sld-ov"><div class="sld-tag">${TGLBL[n.tag]||n.tag}</div><div class="sld-title">${n.title}</div><div class="sld-date">${n.date}</div></div>`;
+      body=`<div class="sld-ph" style="background:${bg}"><div style="font-size:50px">${TGICO[n.tag]||'📰'}</div><div style="font-size:14px;color:#4a6857;font-weight:600;padding:0 36px;text-align:center;line-height:1.5">${n.title}</div></div>`;
     }
-    s.addEventListener('click',()=>{ if(!adminOn) openNewsDetail(n); });
+
+    const delBtn=adminOn
+      ? `<button class="sld-del-btn" onclick="event.stopPropagation();deleteNews(${n.id})" style="position:absolute;top:10px;right:10px;z-index:20;background:#c0392b;border:none;color:#fff;padding:6px 13px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🗑 ลบ</button>`
+      : '';
+
+    s.innerHTML=`${body}${delBtn}
+      <div class="sld-ov"><div class="sld-tag">${TGLBL[n.tag]||n.tag}</div><div class="sld-title">${n.title}</div><div class="sld-date">${n.date}</div></div>`;
+
+    s.addEventListener('click',(e)=>{
+      if(e.target.closest('.sld-del-btn')) return;
+      openNewsDetail(n);
+    });
     w.appendChild(s);
   });
-  w.innerHTML+=`<button class="sarr sprev" onclick="event.stopPropagation();moveSlide(-1)">&#8249;</button><button class="sarr snext" onclick="event.stopPropagation();moveSlide(1)">&#8250;</button>`;
+
+  const prev=document.createElement('button'); prev.className='sarr sprev'; prev.innerHTML='&#8249;';
+  prev.onclick=(e)=>{e.stopPropagation();moveSlide(-1);}; w.appendChild(prev);
+  const next=document.createElement('button'); next.className='sarr snext'; next.innerHTML='&#8250;';
+  next.onclick=(e)=>{e.stopPropagation();moveSlide(1);}; w.appendChild(next);
+
   const dw=document.createElement('div'); dw.className='sdots'; dw.id='sdots';
-  newsData.forEach((_,i)=>{const d=document.createElement('div');d.className='sdot'+(i===0?' act':'');d.onclick=(e)=>{e.stopPropagation();gotoSlide(i);};dw.appendChild(d);});
+  newsData.forEach((_,i)=>{
+    const d=document.createElement('div');
+    d.className='sdot'+(i===0?' act':'');
+    d.onclick=(e)=>{e.stopPropagation();gotoSlide(i);};
+    dw.appendChild(d);
+  });
   w.appendChild(dw);
 }
 function gotoSlide(i){
@@ -943,7 +965,7 @@ function renderMini(){
     const delBtn=adminOn?`<button onclick="event.stopPropagation();deleteNews(${n.id})" style="position:absolute;top:6px;right:6px;background:#c0392b;border:none;color:#fff;width:22px;height:22px;border-radius:50%;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;z-index:5;padding:0">×</button>`:'';
     el.innerHTML=`<div class="nmimg" style="background:${TGBG[n.tag]||'#e8f5ed'}">${n.img?`<img src="${n.img}" style="width:100%;height:100%;object-fit:cover;border-radius:8px" onerror="this.parentElement.textContent='${TGICO[n.tag]||'📰'}'">`:TGICO[n.tag]||'📰'}</div>
     <div style="min-width:0;flex:1;padding-right:${adminOn?'20px':'0'}"><span class="ntag ${TGCLS[n.tag]||'ts'}">${TGLBL[n.tag]||n.tag}</span><div class="nmtitle">${n.title}${hasPDF}</div><div class="nmdate">${n.date}</div></div>${delBtn}`;
-    el.addEventListener('click',()=>openNewsDetail(n));
+    el.addEventListener('click',(e)=>{ if(!e.target.closest('button')) openNewsDetail(n); });
     g.appendChild(el);
   });
 }
@@ -956,16 +978,24 @@ function deleteNews(id){
   renderSS(); renderMini();
 }
 
-// NEWS DETAIL POPUP
+// NEWS DETAIL POPUP — fullscreen viewer
 function openNewsDetail(n){
-  document.getElementById('detail-tag').innerHTML=`<span class="ntag ${TGCLS[n.tag]||'ts'}">${TGLBL[n.tag]||n.tag}</span>`;
+  // Tag
+  document.getElementById('detail-tag').innerHTML=`<span class="ntag ${TGCLS[n.tag]||'ts'}" style="font-size:10px">${TGLBL[n.tag]||n.tag}</span>`;
   document.getElementById('detail-title').textContent=n.title;
   document.getElementById('detail-date').textContent=n.date;
-  document.getElementById('detail-body').textContent=n.detail||'';
-  const pdfDiv=document.getElementById('news-detail-pdf');
+  const content=document.getElementById('news-detail-content');
   if(n.pdfUrl){
-    pdfDiv.innerHTML=`<div class="ifrwrap"><div class="ifrbar"><div class="idot" style="background:#ff5f57"></div><div class="idot" style="background:#febc2e"></div><div class="idot" style="background:#28c840"></div><span style="margin-left:6px;">📄 ${n.pdfName||'ไฟล์แนบ'}</span></div><iframe src="${n.pdfUrl}" style="width:100%;height:420px;border:none;display:block;"></iframe></div>`;
-  } else pdfDiv.innerHTML='';
+    // PDF — full iframe
+    content.innerHTML=`<iframe src="${n.pdfUrl}#toolbar=0&navpanes=0&scrollbar=0" style="width:100%;height:100%;border:none;display:block;min-height:85vh"></iframe>`;
+  } else if(n.img){
+    // Image — fit screen, tap to close
+    content.innerHTML=`<img src="${n.img}" style="max-width:100%;max-height:100%;object-fit:contain;display:block;cursor:zoom-in" onclick="this.style.transform=this.style.transform?'':'scale(1.6)';this.style.transition='.3s'" onerror="this.style.display='none'">`;
+  } else {
+    // Text only
+    content.style.padding='24px';
+    content.innerHTML=`<div style="color:#fff;font-size:14px;line-height:1.8;text-align:center;max-width:480px">${n.detail||'ไม่มีรายละเอียดเพิ่มเติม'}</div>`;
+  }
   openModal('mnewsdetail');
 }
 
@@ -1333,7 +1363,13 @@ function openModal(id){
   }
   document.getElementById(id).classList.add('show');
 }
-function closeModal(id){document.getElementById(id).classList.remove('show');}
+function closeModal(id){
+  document.getElementById(id).classList.remove('show');
+  if(id==='mnewsdetail'){
+    const c=document.getElementById('news-detail-content');
+    if(c) c.innerHTML='';
+  }
+}
 document.querySelectorAll('.movl').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');}));
 
 function saveNews(){
