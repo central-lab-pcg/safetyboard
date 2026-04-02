@@ -20,6 +20,7 @@ firebase.initializeApp({
   appId:"1:215203729064:web:ea2c1f0dc70d2f10273c9d"
 });
 const db=firebase.firestore();
+db.settings({experimentalForceLongPolling:true,merge:true});
 const storage=firebase.storage();
 </script>
 <style>
@@ -1580,6 +1581,13 @@ async function loadFromFirebase(){
   // Hide loading overlay
   const ov=document.getElementById('fb-loading');
   if(ov) ov.style.display='none';
+}
+
+// DISEASE CHART
+function buildDis(){
+  const el=document.getElementById('dischart'); if(!el) return;
+  const data=[{n:'ทางเดินหายใจ',v:74},{n:'ทางเดินอาหาร',v:42},{n:'ระบบประสาท',v:25},{n:'กล้ามเนื้อ/กระดูก',v:24},{n:'ตา/หู/จมูก',v:17}];
+  el.innerHTML=data.map(d=>`<div class="brow"><div class="blrow"><span>${d.n}</span><span class="bv">${d.v}</span></div><div class="btrack"><div class="bfill" style="width:${Math.round(d.v/74*100)}%"></div></div></div>`).join('');
 }
 
 // INIT
