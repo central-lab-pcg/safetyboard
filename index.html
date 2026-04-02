@@ -6,6 +6,22 @@
 <title>Safety Board Online — PCG Central Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script>
+firebase.initializeApp({
+  apiKey:"AIzaSyDJy_DPNu0wHZgNeOQ90Io1gSZJ7wkKsXE",
+  authDomain:"safety-board-848b7.firebaseapp.com",
+  projectId:"safety-board-848b7",
+  storageBucket:"safety-board-848b7.firebasestorage.app",
+  messagingSenderId:"215203729064",
+  appId:"1:215203729064:web:ea2c1f0dc70d2f10273c9d"
+});
+const db=firebase.firestore();
+const storage=firebase.storage();
+</script>
 <style>
 :root{
   --green:#1a7a3c;--greenl:#2ea84f;--greenpale:#e8f5ed;--greendim:#d1eeda;--greenbrd:#b2ddc0;
@@ -265,6 +281,13 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(
 </style>
 </head>
 <body>
+
+<!-- LOADING OVERLAY -->
+<div id="fb-loading" style="position:fixed;inset:0;background:rgba(26,122,60,.95);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+  <div style="width:48px;height:48px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite"></div>
+  <div style="color:#fff;font-size:14px;font-weight:600;font-family:'IBM Plex Sans Thai',sans-serif">กำลังโหลดข้อมูล...</div>
+  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+</div>
 
 <!-- HEADER -->
 <div class="hdr">
@@ -731,12 +754,11 @@ const TGBG={safety:'#e8f5ed',health:'#e8f4fd',event:'#fef5e4',alert:'#fdecea'};
 
 let adminOn=false, slideIdx=0, kytIdx=0;
 
-// ─── DYNAMIC YEAR — auto-roll over each Jan 1 ───
-let CAL_YEAR=new Date().getFullYear(); // e.g. 2026
-// if today is still in a year where we have data, keep it; roll over automatically
+// ─── DYNAMIC YEAR ───
+let CAL_YEAR=new Date().getFullYear();
 function getCalYear(){ return new Date().getFullYear(); }
 
-// ─── ACCIDENT-FREE START DATE (editable by admin) ───
+// ─── START DATE (from Firestore, fallback localStorage) ───
 let startDateStr=localStorage.getItem('safetyStartDate')||`${CAL_YEAR}-01-01`;
 let START=new Date(startDateStr);
 
@@ -747,29 +769,46 @@ function updateStartDisplay(){
   if(el) el.textContent=`นับตั้งแต่ ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()+543}`;
 }
 
-// ─── HOLIDAYS — editable by admin, stored per year ───
-let holidaysList=JSON.parse(localStorage.getItem('holidaysList')||'null') || [
+// ─── HOLIDAYS ───
+let holidaysList=JSON.parse(localStorage.getItem('holidaysList')||'null')||[
   `${CAL_YEAR}-1-1`,`${CAL_YEAR}-2-17`,
   `${CAL_YEAR}-4-13`,`${CAL_YEAR}-4-14`,`${CAL_YEAR}-4-15`,`${CAL_YEAR}-4-16`,
-  `${CAL_YEAR}-5-1`,
-  `${CAL_YEAR}-6-3`,
-  `${CAL_YEAR}-7-28`,`${CAL_YEAR}-7-29`,
-  `${CAL_YEAR}-8-12`,
+  `${CAL_YEAR}-5-1`,`${CAL_YEAR}-6-3`,
+  `${CAL_YEAR}-7-28`,`${CAL_YEAR}-7-29`,`${CAL_YEAR}-8-12`,
   `${CAL_YEAR}-10-12`,`${CAL_YEAR}-10-13`,`${CAL_YEAR}-10-23`,
   `${CAL_YEAR}-12-5`,`${CAL_YEAR}-12-30`,`${CAL_YEAR}-12-31`
 ];
 let HOLIDAYS=new Set(holidaysList);
-
 function saveHolidays(){
   holidaysList=[...HOLIDAYS];
   localStorage.setItem('holidaysList',JSON.stringify(holidaysList));
+  db.collection('settings').doc('holidays').set({list:holidaysList});
 }
 
 let calData=JSON.parse(localStorage.getItem('calData')||'{}');
-// Auto-tick handled in buildCal()
 
-// temp file blobs for news
-let newsFilePending=null; // {type:'pdf'|'img', url, name}
+// ─── Firebase save helpers ───
+function fbSaveNews(){
+  const plain=newsData.map(n=>({...n,img:n.img&&n.img.startsWith('blob:')?'':n.img,pdfUrl:n.pdfUrl&&n.pdfUrl.startsWith('blob:')?'':n.pdfUrl}));
+  db.collection('settings').doc('news').set({items:plain});
+}
+function fbSaveCalData(){
+  db.collection('settings').doc('calData').set({data:calData});
+  localStorage.setItem('calData',JSON.stringify(calData));
+}
+function fbSaveSettings(key,val){
+  db.collection('settings').doc(key).set(val);
+}
+
+// ─── Upload file to Firebase Storage, return download URL ───
+async function uploadToStorage(file, path){
+  const ref=storage.ref(path+'/'+Date.now()+'_'+file.name);
+  await ref.put(file);
+  return await ref.getDownloadURL();
+}
+
+// temp blobs (before upload finishes)
+let newsFilePending=null;
 let heroImgPending=null;
 
 let newsData=[];
@@ -856,7 +895,7 @@ function handleNewsFile(e){
   const f=e.target.files[0]; if(!f) return;
   const url=URL.createObjectURL(f);
   const isPDF=f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf');
-  newsFilePending={type:isPDF?'pdf':'img',url,name:f.name};
+  newsFilePending={type:isPDF?'pdf':'img',url,name:f.name,file:f};
   const pz=document.getElementById('pz-news');
   pz.classList.add('has-file');
   document.getElementById('pz-news-name').style.display='block';
@@ -878,12 +917,24 @@ let heroImgIdx=0;
 
 function handleHeroImages(e){
   const files=Array.from(e.target.files); if(!files.length) return;
-  files.forEach(f=>{
+  const btn=e.target.closest('label');
+  if(btn) btn.textContent='⏳ กำลังอัปโหลด...';
+  Promise.all(Array.from(files).map(async f=>{
     const isPDF=f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf');
-    heroImages.unshift({url:URL.createObjectURL(f), name:f.name, isPDF});
+    let url;
+    try{
+      const ref=storage.ref('hero/'+Date.now()+'_'+f.name);
+      const snap=await ref.put(f);
+      url=await snap.ref.getDownloadURL();
+    }catch(err){url=URL.createObjectURL(f);}
+    return {url,name:f.name,isPDF};
+  })).then(items=>{
+    items.forEach(it=>heroImages.unshift(it));
+    heroImgIdx=0;
+    db.collection('settings').doc('heroImages').set({images:heroImages.map(h=>h.url)});
+    renderHero();
+    if(btn) btn.textContent='🖼 เลือกรูป Hero';
   });
-  heroImgIdx=0;
-  renderHero();
 }
 
 function handleHeroImg(e){
@@ -975,6 +1026,7 @@ function deleteNews(id){
   if(!confirm('ลบข่าวนี้ออก?')) return;
   newsData=newsData.filter(n=>n.id!==id);
   slideIdx=0;
+  fbSaveNews();
   renderSS(); renderMini();
 }
 
@@ -1033,6 +1085,7 @@ function deleteHeroImg(i){
   if(!confirm(`ลบรูป Hero ที่ ${i+1} ออก?`)) return;
   heroImages.splice(i,1);
   heroImgIdx=Math.min(heroImgIdx, Math.max(0, heroImages.length-1));
+  db.collection('settings').doc('heroImages').set({images:heroImages.map(h=>h.url)});
   renderHero();
 }
 
@@ -1042,12 +1095,21 @@ let kytImgIdx=0;
 
 function handleKytImages(e){
   const files=Array.from(e.target.files); if(!files.length) return;
-  files.forEach(f=>{
+  Promise.all(Array.from(files).map(async f=>{
     const isPDF=f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf');
-    kytImages.unshift({url:URL.createObjectURL(f), name:f.name, isPDF});
+    let url;
+    try{
+      const ref=storage.ref('kyt/'+Date.now()+'_'+f.name);
+      const snap=await ref.put(f);
+      url=await snap.ref.getDownloadURL();
+    }catch(err){url=URL.createObjectURL(f);}
+    return {url,name:f.name,isPDF};
+  })).then(items=>{
+    items.forEach(it=>kytImages.unshift(it));
+    kytImgIdx=0;
+    db.collection('settings').doc('kytImages').set({images:kytImages.map(k=>k.url)});
+    renderKyt();
   });
-  kytImgIdx=0;
-  renderKyt();
 }
 
 function renderKyt(){
@@ -1079,6 +1141,7 @@ function deleteKytImg(i){
   if(!confirm(`ลบรูป KYT ที่ ${i+1} ออก?`)) return;
   kytImages.splice(i,1);
   kytImgIdx=Math.min(kytImgIdx, Math.max(0, kytImages.length-1));
+  db.collection('settings').doc('kytImages').set({images:kytImages.map(k=>k.url)});
   renderKyt();
 }
 function openKytFull(url){
@@ -1143,7 +1206,7 @@ function buildCal(){
         const cy=[null,'safe','incident','lost'];
         const nx=cy[(cy.indexOf(calData[key]||null)+1)%cy.length];
         if(nx) calData[key]=nx; else delete calData[key];
-        localStorage.setItem('calData',JSON.stringify(calData));
+        fbSaveCalData();
         buildCal(); calcDays();
       });
       g.appendChild(cell);
@@ -1188,6 +1251,7 @@ function saveStartDate(){
   startDateStr=v;
   START=new Date(v);
   localStorage.setItem('safetyStartDate',v);
+  db.collection('settings').doc('startDate').set({date:v});
   updateStartDisplay(); calcDays(); closeModal('mstartdate');
 }
 function openStartDateModal(){
@@ -1195,15 +1259,25 @@ function openStartDateModal(){
   openModal('mstartdate');
 }
 
-// ─── FILE UPLOAD with history/delete ───
+// ─── FILE UPLOAD with history/delete (KPI, Audit, NCR, Kaizen, Culture, Report) ───
 const fileStore={};
-function loadFileSingle(inp,tid,key){
+async function loadFileSingle(inp,tid,key){
   const f=inp.files[0]; if(!f) return;
-  const url=URL.createObjectURL(f);
+  inp.disabled=true;
+  let url;
+  try{
+    const ref=storage.ref(`docs/${key}/${Date.now()}_${f.name}`);
+    const snap=await ref.put(f);
+    url=await snap.ref.getDownloadURL();
+  }catch(err){
+    url=URL.createObjectURL(f);
+  }
+  inp.disabled=false;
   const ts=new Date().toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});
   if(!fileStore[key]) fileStore[key]=[];
-  // push to history
   fileStore[key].unshift({url,name:f.name,ts});
+  // Save to Firestore (URLs only)
+  db.collection('settings').doc('files_'+key).set({items:fileStore[key].map(f=>({url:f.url,name:f.name,ts:f.ts}))});
   renderFileSection(tid,key);
 }
 function renderFileSection(tid,key){
@@ -1232,14 +1306,16 @@ function renderFileSection(tid,key){
 }
 function deleteFileCurrent(tid,key){
   if(!adminOn||!fileStore[key]||!fileStore[key].length) return;
-  if(!confirm('ลบไฟล์ปัจจุบันออก? ไฟล์ก่อนหน้าจะถูกแสดงแทน')) return;
+  if(!confirm('ลบไฟล์ปัจจุบันออก?')) return;
   fileStore[key].shift();
+  db.collection('settings').doc('files_'+key).set({items:fileStore[key].map(f=>({url:f.url,name:f.name,ts:f.ts}))});
   renderFileSection(tid,key);
 }
 function deleteFileOld(tid,key,idx){
   if(!adminOn) return;
   if(!confirm('ลบไฟล์นี้ออก?')) return;
   fileStore[key].splice(idx,1);
+  db.collection('settings').doc('files_'+key).set({items:fileStore[key].map(f=>({url:f.url,name:f.name,ts:f.ts}))});
   renderFileSection(tid,key);
 }
 function viewOldFile(key,idx){
@@ -1264,17 +1340,27 @@ const KYTCAL_MONTHS_FULL=['มกราคม','กุมภาพันธ์',
 
 function handleKytCalPdf(e){
   const files=Array.from(e.target.files); if(!files.length) return;
-  files.forEach(f=>{
-    const url=URL.createObjectURL(f);
+  Promise.all(Array.from(files).map(async f=>{
     const isPDF=f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf');
+    let url;
+    try{
+      const ref=storage.ref('kytcal/'+Date.now()+'_'+f.name);
+      const snap=await ref.put(f);
+      url=await snap.ref.getDownloadURL();
+    }catch(err){url=URL.createObjectURL(f);}
     let m=kytCalMonthSel;
     KYTCAL_MONTHS_FULL.forEach((mn,i)=>{ if(f.name.includes(mn)||f.name.includes(KYTCAL_MONTHS_SHORT[i])) m=i; });
-    kytCalPdfs=kytCalPdfs.filter(p=>p.month!==m);
-    kytCalPdfs.push({url, name:f.name, month:m, isPDF});
-    kytCalMonthSel=m;
+    return {url, name:f.name, month:m, isPDF};
+  })).then(items=>{
+    items.forEach(item=>{
+      kytCalPdfs=kytCalPdfs.filter(p=>p.month!==item.month);
+      kytCalPdfs.push(item);
+      kytCalMonthSel=item.month;
+    });
+    db.collection('settings').doc('kytCalPdfs').set({items:kytCalPdfs});
+    buildKytCalTabs();
+    buildKytCalGrid();
   });
-  buildKytCalTabs();
-  buildKytCalGrid();
 }
 
 function deleteKytCalPdf(){
@@ -1283,6 +1369,7 @@ function deleteKytCalPdf(){
   if(!has){alert('ไม่มีไฟล์ในเดือนนี้');return;}
   if(!confirm(`ลบไฟล์เดือน ${KYTCAL_MONTHS_FULL[kytCalMonthSel]} ออก?`)) return;
   kytCalPdfs=kytCalPdfs.filter(p=>p.month!==kytCalMonthSel);
+  db.collection('settings').doc('kytCalPdfs').set({items:kytCalPdfs});
   buildKytCalTabs();
   buildKytCalGrid();
 }
@@ -1372,31 +1459,121 @@ function closeModal(id){
 }
 document.querySelectorAll('.movl').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('show');}));
 
-function saveNews(){
+async function saveNews(){
   const t=document.getElementById('ntitle').value.trim(); if(!t)return alert('กรุณากรอกหัวข้อ');
   const raw=document.getElementById('ndate').value, dt=raw?new Date(raw):new Date();
   const ds=`${dt.getDate()} ${MSHORT[dt.getMonth()]} ${String(dt.getFullYear()).slice(-2)}`;
   const urlImg=document.getElementById('nimg').value.trim();
-  
+
+  // Show loading
+  const saveBtn=document.querySelector('#mnews .bsave');
+  if(saveBtn){saveBtn.textContent='⏳ กำลังอัปโหลด...';saveBtn.disabled=true;}
+
   let imgFinal='', pdfUrlFinal='', pdfNameFinal='';
-  if(newsFilePending){
-    if(newsFilePending.type==='pdf'){pdfUrlFinal=newsFilePending.url;pdfNameFinal=newsFilePending.name;}
-    else{imgFinal=newsFilePending.url;}
+  try{
+    if(newsFilePending){
+      if(newsFilePending.type==='pdf'){
+        // upload PDF to Storage
+        const ref=storage.ref('news/'+Date.now()+'_'+newsFilePending.name);
+        const snap=await ref.put(newsFilePending.file);
+        pdfUrlFinal=await snap.ref.getDownloadURL();
+        pdfNameFinal=newsFilePending.name;
+      } else {
+        // upload image to Storage
+        const ref=storage.ref('news/'+Date.now()+'_'+newsFilePending.name);
+        const snap=await ref.put(newsFilePending.file);
+        imgFinal=await snap.ref.getDownloadURL();
+      }
+    }
+    if(urlImg) imgFinal=urlImg;
+
+    const item={id:Date.now(),title:t,detail:document.getElementById('ndetail').value,date:ds,tag:document.getElementById('ntag').value,img:imgFinal,pdfUrl:pdfUrlFinal,pdfName:pdfNameFinal};
+    newsData.unshift(item);
+    fbSaveNews();
+    renderSS(); renderMini(); closeModal('mnews');
+  } catch(e){
+    alert('เกิดข้อผิดพลาดในการอัปโหลด: '+e.message);
+  } finally {
+    if(saveBtn){saveBtn.textContent='💾 บันทึก';saveBtn.disabled=false;}
+    newsFilePending=null;
   }
-  if(urlImg) imgFinal=urlImg;
-  
-  newsData.unshift({id:Date.now(),title:t,detail:document.getElementById('ndetail').value,date:ds,tag:document.getElementById('ntag').value,img:imgFinal,pdfUrl:pdfUrlFinal,pdfName:pdfNameFinal});
-  renderSS(); renderMini(); closeModal('mnews');
 }
-function saveHero(){
-  const imgUrl=heroImgPending||document.getElementById('himg').value;
+
+async function saveHero(){
+  let imgUrl=document.getElementById('himg').value;
+  if(heroImgPending&&heroImgPending.file){
+    const ref=storage.ref('hero/'+Date.now()+'_'+heroImgPending.name);
+    const snap=await ref.put(heroImgPending.file);
+    imgUrl=await snap.ref.getDownloadURL();
+  }
   heroData={month:document.getElementById('hmonth').value,name:document.getElementById('hname').value||'— รอประกาศ —',dept:document.getElementById('hdept').value,reason:document.getElementById('hreason').value,img:imgUrl};
+  db.collection('settings').doc('hero').set(heroData);
   renderHero(); closeModal('mhero');
 }
 
+// ─── INIT — load everything from Firestore ───
+async function loadFromFirebase(){
+  try{
+    // News
+    const nd=await db.collection('settings').doc('news').get();
+    if(nd.exists && nd.data().items) newsData=nd.data().items;
+
+    // Hero text data
+    const hd=await db.collection('settings').doc('hero').get();
+    if(hd.exists) heroData={...heroData,...hd.data()};
+
+    // Calendar data
+    const cd=await db.collection('settings').doc('calData').get();
+    if(cd.exists && cd.data().data) calData={...cd.data().data};
+
+    // Holidays
+    const hl=await db.collection('settings').doc('holidays').get();
+    if(hl.exists && hl.data().list){holidaysList=hl.data().list; HOLIDAYS=new Set(holidaysList);}
+
+    // Start date
+    const sd=await db.collection('settings').doc('startDate').get();
+    if(sd.exists && sd.data().date){startDateStr=sd.data().date; START=new Date(startDateStr); localStorage.setItem('safetyStartDate',startDateStr);}
+
+    // Hero images list (URLs from Storage)
+    const hi=await db.collection('settings').doc('heroImages').get();
+    if(hi.exists && hi.data().images) heroImages=hi.data().images.map(u=>({url:u,name:'',isPDF:false}));
+
+    // KYT weekly images
+    const ki=await db.collection('settings').doc('kytImages').get();
+    if(ki.exists && ki.data().images) kytImages=ki.data().images.map(u=>({url:u,name:'',isPDF:u.includes('.pdf')||u.includes('%2F')}));
+
+    // KYT annual calendar
+    const kc=await db.collection('settings').doc('kytCalPdfs').get();
+    if(kc.exists && kc.data().items) kytCalPdfs=kc.data().items;
+
+    // Tab files (KPI, CPO, Nurse, Audit, NCR, Kaizen, Culture)
+    const tabKeys=['kpi','cpo','nurse','audit','ncr','kaizen','culture'];
+    await Promise.all(tabKeys.map(async k=>{
+      const d=await db.collection('settings').doc('files_'+k).get();
+      if(d.exists && d.data().items && d.data().items.length){
+        fileStore[k]=d.data().items;
+      }
+    }));
+
+  } catch(e){ console.warn('Firebase load error:',e); }
+
+  // Render everything
+  renderSS(); renderMini(); renderKyt(); renderHero(); buildCal(); buildDis();
+  buildKytCalTabs(); buildKytCalGrid();
+  updateStartDisplay(); calcDays();
+
+  // Render tab files
+  ['kpi','cpo','nurse','audit','ncr','kaizen','culture'].forEach(k=>{
+    if(fileStore[k]&&fileStore[k].length) renderFileSection(k+'frame',k);
+  });
+
+  // Hide loading overlay
+  const ov=document.getElementById('fb-loading');
+  if(ov) ov.style.display='none';
+}
+
 // INIT
-renderSS(); renderMini(); renderKyt(); renderHero(); buildCal(); buildDis();
-buildKytCalTabs(); buildKytCalGrid();
+loadFromFirebase();
 </script>
 </body>
 </html>
