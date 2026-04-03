@@ -6,85 +6,11 @@
 <title>Safety Board Online — PCG Central Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
-<!-- Firebase Storage SDK only (for file uploads) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<!-- No Firebase - ใช้ JSON file system แทน -->
 <script>
-firebase.initializeApp({
-  apiKey:"AIzaSyDJy_DPNu0wHZgNeOQ90Io1gSZJ7wkKsXE",
-  authDomain:"safety-board-848b7.firebaseapp.com",
-  projectId:"safety-board-848b7",
-  storageBucket:"safety-board-848b7.firebasestorage.app",
-  messagingSenderId:"215203729064",
-  appId:"1:215203729064:web:ea2c1f0dc70d2f10273c9d"
-});
-const storage=firebase.storage();
-
-// ─── Firestore via REST API (ไม่ใช้ WebSocket ไม่มีปัญหา offline) ───
-const FS_BASE='https://firestore.googleapis.com/v1/projects/safety-board-848b7/databases/default/documents';
-const API_KEY='AIzaSyDJy_DPNu0wHZgNeOQ90Io1gSZJ7wkKsXE';
-
-// แปลง JS object → Firestore REST format
-function toFS(obj){
-  const fields={};
-  for(const k in obj){
-    const v=obj[k];
-    if(v===null||v===undefined) fields[k]={nullValue:null};
-    else if(typeof v==='boolean') fields[k]={booleanValue:v};
-    else if(typeof v==='number') fields[k]={doubleValue:v};
-    else if(typeof v==='string') fields[k]={stringValue:v};
-    else if(Array.isArray(v)) fields[k]={arrayValue:{values:v.map(i=>typeof i==='object'?{mapValue:{fields:toFS(i).fields}}:{stringValue:String(i)})}};
-    else if(typeof v==='object') fields[k]={mapValue:{fields:toFS(v).fields}};
-  }
-  return {fields};
-}
-
-// แปลง Firestore REST format → JS object
-function fromFS(doc){
-  if(!doc||!doc.fields) return {};
-  const out={};
-  for(const k in doc.fields){
-    const v=doc.fields[k];
-    if(v.stringValue!==undefined) out[k]=v.stringValue;
-    else if(v.booleanValue!==undefined) out[k]=v.booleanValue;
-    else if(v.doubleValue!==undefined) out[k]=v.doubleValue;
-    else if(v.integerValue!==undefined) out[k]=Number(v.integerValue);
-    else if(v.nullValue!==undefined) out[k]=null;
-    else if(v.arrayValue) out[k]=(v.arrayValue.values||[]).map(i=>i.mapValue?fromFS(i.mapValue):i.stringValue||i.doubleValue||i.integerValue||null);
-    else if(v.mapValue) out[k]=fromFS(v.mapValue);
-  }
-  return out;
-}
-
-// GET document
-async function fsGet(docPath){
-  const r=await fetch(`${FS_BASE}/${docPath}?key=${API_KEY}`);
-  if(!r.ok) return null;
-  const d=await r.json();
-  return fromFS(d);
-}
-
-// SET document (patch)
-async function fsSet(docPath,data){
-  const body=JSON.stringify(toFS(data));
-  const fields=Object.keys(data).map(k=>`updateMask.fieldPaths=${k}`).join('&');
-  await fetch(`${FS_BASE}/${docPath}?${fields}&key=${API_KEY}`,{
-    method:'PATCH',
-    headers:{'Content-Type':'application/json'},
-    body
-  });
-}
-
-// db object ที่ใช้แทน Firestore SDK
-const db={
-  collection:(col)=>({
-    doc:(id)=>({
-      get:()=>fsGet(`${col}/${id}`).then(d=>({exists:!!d,data:()=>d})),
-      set:(data)=>fsSet(`${col}/${id}`,data)
-    }),
-    add:(data)=>fsSet(`${col}/${Date.now()}`,data)
-  })
-};
+// stub ทั้งหมด - ไม่มี network call เลย
+const storage={ref:()=>({put:async(f)=>({ref:{getDownloadURL:async()=>URL.createObjectURL(f)}})})};
+const db={collection:()=>({doc:()=>({get:async()=>({exists:false,data:()=>({})}),set:async()=>{}}),add:async()=>{}})};
 </script>
 <style>
 :root{
@@ -346,12 +272,7 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(
 </head>
 <body>
 
-<!-- LOADING OVERLAY -->
-<div id="fb-loading" style="position:fixed;inset:0;background:rgba(26,122,60,.95);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px">
-  <div style="width:48px;height:48px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite"></div>
-  <div style="color:#fff;font-size:14px;font-weight:600;font-family:'IBM Plex Sans Thai',sans-serif">กำลังโหลดข้อมูล...</div>
-  <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
-</div>
+<!-- (loading overlay removed) -->
 
 <!-- HEADER -->
 <div class="hdr">
@@ -851,10 +772,6 @@ function saveHolidays(){
 
 let calData=JSON.parse(localStorage.getItem('calData')||'{}');
 
-// ─── stub db/storage (ไม่ใช้แล้ว) ───
-const db={collection:()=>({doc:()=>({get:async()=>({exists:false,data:()=>({})}),set:()=>{}})})};
-const storage={ref:()=>({put:async()=>({ref:{getDownloadURL:async()=>''}})}), };
-
 // ─── AUTO SAVE to localStorage ───
 function autoSave(){
   const data={
@@ -920,18 +837,15 @@ async function exportData(){
   }
 }
 
-// ─── LOAD from GitHub data.json ───
+// ─── LOAD from GitHub data.json (background) ───
 async function loadFromFirebase(){
-  const timeout=setTimeout(()=>{
-    const ov=document.getElementById('fb-loading');
-    if(ov) ov.style.display='none';
-    renderSS(); renderMini(); renderKyt(); renderHero(); buildCal(); buildDis();
-    buildKytCalTabs(); buildKytCalGrid();
-    updateStartDisplay(); calcDays();
-  },3000);
+  // แสดงผลทันทีก่อนเลย ไม่รอ
+  renderSS(); renderMini(); renderKyt(); renderHero(); buildCal(); buildDis();
+  buildKytCalTabs(); buildKytCalGrid();
+  updateStartDisplay(); calcDays();
 
+  // โหลด data.json ใน background
   try{
-    // โหลดจาก data.json บน GitHub Pages
     const r=await fetch('./data.json?v='+Date.now());
     if(r.ok){
       const data=await r.json();
@@ -941,35 +855,21 @@ async function loadFromFirebase(){
       if(data.kytImages) kytImages=data.kytImages.map(u=>({url:u,name:'',isPDF:false}));
       if(data.kytCalPdfs) kytCalPdfs=data.kytCalPdfs;
       if(data.calData) calData={...data.calData};
-      if(data.holidaysList){holidaysList=data.holidaysList; HOLIDAYS=new Set(holidaysList); localStorage.setItem('holidaysList',JSON.stringify(holidaysList));}
-      if(data.startDateStr){startDateStr=data.startDateStr; START=new Date(startDateStr); localStorage.setItem('safetyStartDate',startDateStr);}
+      if(data.holidaysList){holidaysList=data.holidaysList;HOLIDAYS=new Set(holidaysList);localStorage.setItem('holidaysList',JSON.stringify(holidaysList));}
+      if(data.startDateStr){startDateStr=data.startDateStr;START=new Date(startDateStr);localStorage.setItem('safetyStartDate',startDateStr);}
       if(data.fileStore){Object.entries(data.fileStore).forEach(([k,v])=>{fileStore[k]=v;});}
+      // รีเรนเดอร์หลังโหลดข้อมูลเสร็จ
+      renderSS(); renderMini(); renderKyt(); renderHero(); buildCal();
+      buildKytCalTabs(); buildKytCalGrid();
+      updateStartDisplay(); calcDays();
+      ['kpi','cpo','nurse','audit','ncr','kaizen','culture'].forEach(k=>{
+        if(fileStore[k]&&fileStore[k].length) renderFileSection(k+'frame',k);
+      });
     }
   } catch(e){
-    // ไม่มี data.json ก็ไม่เป็นไร ใช้ localStorage แทน
-    const local=localStorage.getItem('safetyData');
-    if(local){
-      try{
-        const data=JSON.parse(local);
-        if(data.newsData) newsData=data.newsData;
-        if(data.heroData) heroData={...heroData,...data.heroData};
-        if(data.heroImages) heroImages=data.heroImages.map(u=>({url:u,name:'',isPDF:false}));
-        if(data.kytImages) kytImages=data.kytImages.map(u=>({url:u,name:'',isPDF:false}));
-        if(data.kytCalPdfs) kytCalPdfs=data.kytCalPdfs;
-        if(data.calData) calData={...data.calData};
-      }catch(e2){}
-    }
+    // ไม่มี data.json ก็ไม่เป็นไร ใช้ข้อมูลว่างต่อไป
+    console.log('data.json not found, starting fresh');
   }
-
-  clearTimeout(timeout);
-  renderSS(); renderMini(); renderKyt(); renderHero(); buildCal(); buildDis();
-  buildKytCalTabs(); buildKytCalGrid();
-  updateStartDisplay(); calcDays();
-  ['kpi','cpo','nurse','audit','ncr','kaizen','culture'].forEach(k=>{
-    if(fileStore[k]&&fileStore[k].length) renderFileSection(k+'frame',k);
-  });
-  const ov=document.getElementById('fb-loading');
-  if(ov) ov.style.display='none';
 }
 
 // ─── Upload file to Firebase Storage, return download URL ───
@@ -1684,56 +1584,6 @@ async function saveHero(){
   db.collection('settings').doc('hero').set(heroData);
   renderHero(); closeModal('mhero');
 }
-
-// ─── INIT — load everything from Firestore ───
-async function loadFromFirebase(){
-  // Safety timeout — hide loading after 5 seconds no matter what
-  const timeout=setTimeout(()=>{
-    const ov=document.getElementById('fb-loading');
-    if(ov) ov.style.display='none';
-  }, 5000);
-
-  try{
-    // News
-    const nd=await db.collection('settings').doc('news').get();
-    if(nd.exists && nd.data().items) newsData=nd.data().items;
-
-    // Hero text data
-    const hd=await db.collection('settings').doc('hero').get();
-    if(hd.exists) heroData={...heroData,...hd.data()};
-
-    // Calendar data
-    const cd=await db.collection('settings').doc('calData').get();
-    if(cd.exists && cd.data().data) calData={...cd.data().data};
-
-    // Holidays
-    const hl=await db.collection('settings').doc('holidays').get();
-    if(hl.exists && hl.data().list){holidaysList=hl.data().list; HOLIDAYS=new Set(holidaysList);}
-
-    // Start date
-    const sd=await db.collection('settings').doc('startDate').get();
-    if(sd.exists && sd.data().date){startDateStr=sd.data().date; START=new Date(startDateStr); localStorage.setItem('safetyStartDate',startDateStr);}
-
-    // Hero images list (URLs from Storage)
-    const hi=await db.collection('settings').doc('heroImages').get();
-    if(hi.exists && hi.data().images) heroImages=hi.data().images.map(u=>({url:u,name:'',isPDF:false}));
-
-    // KYT weekly images
-    const ki=await db.collection('settings').doc('kytImages').get();
-    if(ki.exists && ki.data().images) kytImages=ki.data().images.map(u=>({url:u,name:'',isPDF:u.includes('.pdf')||u.includes('%2F')}));
-
-    // KYT annual calendar
-    const kc=await db.collection('settings').doc('kytCalPdfs').get();
-    if(kc.exists && kc.data().items) kytCalPdfs=kc.data().items;
-
-    // Tab files (KPI, CPO, Nurse, Audit, NCR, Kaizen, Culture)
-    const tabKeys=['kpi','cpo','nurse','audit','ncr','kaizen','culture'];
-    await Promise.all(tabKeys.map(async k=>{
-      const d=await db.collection('settings').doc('files_'+k).get();
-      if(d.exists && d.data().items && d.data().items.length){
-        fileStore[k]=d.data().items;
-      }
-    }));
 
 // DISEASE CHART
 function buildDis(){
