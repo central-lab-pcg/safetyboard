@@ -20,8 +20,7 @@ firebase.initializeApp({
   appId:"1:215203729064:web:ea2c1f0dc70d2f10273c9d"
 });
 const db=firebase.firestore();
-// ใช้ REST API แทน WebSocket เพื่อแก้ปัญหา offline บางเครือข่าย
-try{ db.settings({host:'firestore.googleapis.com',ssl:true}); }catch(e){}
+db.settings({experimentalAutoDetectLongPolling:true,merge:true});
 db.enableNetwork().catch(()=>{});
 const storage=firebase.storage();
 </script>
