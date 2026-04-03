@@ -21,7 +21,7 @@ firebase.initializeApp({
 const storage=firebase.storage();
 
 // ─── Firestore via REST API (ไม่ใช้ WebSocket ไม่มีปัญหา offline) ───
-const FS_BASE='https://firestore.googleapis.com/v1/projects/safety-board-848b7/databases/safety-board-848b7/documents';
+const FS_BASE='https://firestore.googleapis.com/v1/projects/safety-board-848b7/databases/default/documents';
 const API_KEY='AIzaSyDJy_DPNu0wHZgNeOQ90Io1gSZJ7wkKsXE';
 
 // แปลง JS object → Firestore REST format
@@ -363,6 +363,7 @@ body{font-family:'IBM Plex Sans Thai',sans-serif;background:var(--bg);color:var(
     <div class="hdr-right">
       <div class="clk"><div class="clk-t" id="clock"></div><div class="clk-d" id="cdate"></div></div>
       <button class="abtn" id="atoggle" onclick="toggleAdmin()">🔐 Admin</button>
+      <button id="export-btn" onclick="exportData()" style="display:none;background:#f0a500;border:none;color:#fff;padding:7px 13px;border-radius:20px;font-size:12px;font-family:'IBM Plex Sans Thai',sans-serif;cursor:pointer;font-weight:700">💾 Export</button>
     </div>
   </div>
 </div>
@@ -820,9 +821,8 @@ let adminOn=false, slideIdx=0, kytIdx=0;
 
 // ─── DYNAMIC YEAR ───
 let CAL_YEAR=new Date().getFullYear();
-function getCalYear(){ return new Date().getFullYear(); }
 
-// ─── START DATE (from Firestore, fallback localStorage) ───
+// ─── START DATE ───
 let startDateStr=localStorage.getItem('safetyStartDate')||`${CAL_YEAR}-01-01`;
 let START=new Date(startDateStr);
 
@@ -846,22 +846,127 @@ let HOLIDAYS=new Set(holidaysList);
 function saveHolidays(){
   holidaysList=[...HOLIDAYS];
   localStorage.setItem('holidaysList',JSON.stringify(holidaysList));
-  db.collection('settings').doc('holidays').set({list:holidaysList});
+  autoSave();
 }
 
 let calData=JSON.parse(localStorage.getItem('calData')||'{}');
 
-// ─── Firebase save helpers ───
-function fbSaveNews(){
-  const plain=newsData.map(n=>({...n,img:n.img&&n.img.startsWith('blob:')?'':n.img,pdfUrl:n.pdfUrl&&n.pdfUrl.startsWith('blob:')?'':n.pdfUrl}));
-  db.collection('settings').doc('news').set({items:plain});
+// ─── stub db/storage (ไม่ใช้แล้ว) ───
+const db={collection:()=>({doc:()=>({get:async()=>({exists:false,data:()=>({})}),set:()=>{}})})};
+const storage={ref:()=>({put:async()=>({ref:{getDownloadURL:async()=>''}})}), };
+
+// ─── AUTO SAVE to localStorage ───
+function autoSave(){
+  const data={
+    newsData, heroData, heroImages:heroImages.map(h=>h.url),
+    kytImages:kytImages.map(k=>k.url),
+    kytCalPdfs, calData, holidaysList,
+    startDateStr,
+    fileStore: Object.fromEntries(Object.entries(fileStore).map(([k,v])=>[k,v.map(f=>({url:f.url,name:f.name,ts:f.ts}))]))
+  };
+  localStorage.setItem('safetyData', JSON.stringify(data));
 }
-function fbSaveCalData(){
-  db.collection('settings').doc('calData').set({data:calData});
-  localStorage.setItem('calData',JSON.stringify(calData));
+
+function fbSaveNews(){ autoSave(); }
+function fbSaveCalData(){ localStorage.setItem('calData',JSON.stringify(calData)); autoSave(); }
+function fbSaveSettings(){ autoSave(); }
+
+// ─── AUTO PUSH to GitHub ───
+const GH_TOKEN='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';
+const GH_REPO='central-lab-pcg/safetyboard';
+const GH_FILE='data.json';
+
+async function exportData(){
+  const btn=document.getElementById('export-btn');
+  if(btn){btn.textContent='⏳ กำลังบันทึก...';btn.disabled=true;}
+  
+  const data={
+    newsData, heroData,
+    heroImages: heroImages.map(h=>h.url),
+    kytImages: kytImages.map(k=>k.url),
+    kytCalPdfs, calData, holidaysList, startDateStr,
+    fileStore: Object.fromEntries(Object.entries(fileStore).map(([k,v])=>[k,v.map(f=>({url:f.url,name:f.name,ts:f.ts}))]))
+  };
+  const content=btoa(unescape(encodeURIComponent(JSON.stringify(data,null,2))));
+  
+  try{
+    // ดึง SHA ของไฟล์เดิมก่อน (ถ้ามี)
+    let sha='';
+    const check=await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`,{
+      headers:{Authorization:`token ${GH_TOKEN}`,'Accept':'application/vnd.github.v3+json'}
+    });
+    if(check.ok){const j=await check.json(); sha=j.sha||'';}
+    
+    // Push ไฟล์ใหม่
+    const body={message:'update data.json',content};
+    if(sha) body.sha=sha;
+    const res=await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`,{
+      method:'PUT',
+      headers:{Authorization:`token ${GH_TOKEN}`,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
+      body:JSON.stringify(body)
+    });
+    
+    if(res.ok){
+      if(btn){btn.textContent='✅ บันทึกแล้ว!';btn.style.background='#1a7a3c';}
+      setTimeout(()=>{if(btn){btn.textContent='💾 Export';btn.style.background='#f0a500';btn.disabled=false;}},3000);
+      alert('✅ บันทึกข้อมูลขึ้น GitHub แล้ว!\nรอ 1-2 นาที แล้วรีเฟรชหน้าเว็บ ทุกคนจะเห็นข้อมูลใหม่ครับ');
+    } else {
+      const err=await res.json();
+      throw new Error(err.message||'Push failed');
+    }
+  } catch(e){
+    alert('❌ เกิดข้อผิดพลาด: '+e.message+'\nลองใหม่อีกครั้งครับ');
+    if(btn){btn.textContent='💾 Export';btn.style.background='#f0a500';btn.disabled=false;}
+  }
 }
-function fbSaveSettings(key,val){
-  db.collection('settings').doc(key).set(val);
+
+// ─── LOAD from GitHub data.json ───
+async function loadFromFirebase(){
+  const timeout=setTimeout(()=>{
+    const ov=document.getElementById('fb-loading');
+    if(ov) ov.style.display='none';
+  },5000);
+
+  try{
+    // โหลดจาก data.json บน GitHub Pages
+    const r=await fetch('./data.json?v='+Date.now());
+    if(r.ok){
+      const data=await r.json();
+      if(data.newsData) newsData=data.newsData;
+      if(data.heroData) heroData={...heroData,...data.heroData};
+      if(data.heroImages) heroImages=data.heroImages.map(u=>({url:u,name:'',isPDF:false}));
+      if(data.kytImages) kytImages=data.kytImages.map(u=>({url:u,name:'',isPDF:false}));
+      if(data.kytCalPdfs) kytCalPdfs=data.kytCalPdfs;
+      if(data.calData) calData={...data.calData};
+      if(data.holidaysList){holidaysList=data.holidaysList; HOLIDAYS=new Set(holidaysList); localStorage.setItem('holidaysList',JSON.stringify(holidaysList));}
+      if(data.startDateStr){startDateStr=data.startDateStr; START=new Date(startDateStr); localStorage.setItem('safetyStartDate',startDateStr);}
+      if(data.fileStore){Object.entries(data.fileStore).forEach(([k,v])=>{fileStore[k]=v;});}
+    }
+  } catch(e){
+    // ไม่มี data.json ก็ไม่เป็นไร ใช้ localStorage แทน
+    const local=localStorage.getItem('safetyData');
+    if(local){
+      try{
+        const data=JSON.parse(local);
+        if(data.newsData) newsData=data.newsData;
+        if(data.heroData) heroData={...heroData,...data.heroData};
+        if(data.heroImages) heroImages=data.heroImages.map(u=>({url:u,name:'',isPDF:false}));
+        if(data.kytImages) kytImages=data.kytImages.map(u=>({url:u,name:'',isPDF:false}));
+        if(data.kytCalPdfs) kytCalPdfs=data.kytCalPdfs;
+        if(data.calData) calData={...data.calData};
+      }catch(e2){}
+    }
+  }
+
+  clearTimeout(timeout);
+  renderSS(); renderMini(); renderKyt(); renderHero(); buildCal(); buildDis();
+  buildKytCalTabs(); buildKytCalGrid();
+  updateStartDisplay(); calcDays();
+  ['kpi','cpo','nurse','audit','ncr','kaizen','culture'].forEach(k=>{
+    if(fileStore[k]&&fileStore[k].length) renderFileSection(k+'frame',k);
+  });
+  const ov=document.getElementById('fb-loading');
+  if(ov) ov.style.display='none';
 }
 
 // ─── Upload file to Firebase Storage, return download URL ───
@@ -922,6 +1027,7 @@ function toggleAdmin(){
     document.getElementById('calpanel').classList.remove('show');
     document.getElementById('addnewsbtn').classList.remove('show');
     const esb=document.getElementById('editstart-btn'); if(esb) esb.style.display='none';
+    const exb=document.getElementById('export-btn'); if(exb) exb.style.display='none';
     renderMini(); renderHero(); renderKyt(); renderSS();
     ['kpi','cpo','nurse','audit','ncr','kaizen','culture'].forEach(k=>{if(fileStore[k]&&fileStore[k].length)renderFileSection(k+'frame',k);});
   } else {
@@ -942,6 +1048,7 @@ function doLogin(){
     document.getElementById('calpanel').classList.add('show');
     document.getElementById('addnewsbtn').classList.add('show');
     const esb=document.getElementById('editstart-btn'); if(esb) esb.style.display='inline-block';
+    const exb=document.getElementById('export-btn'); if(exb) exb.style.display='inline-block';
     closeModal('mlogin');
     renderMini(); renderHero(); renderKyt(); renderSS();
     ['kpi','cpo','nurse','audit','ncr','kaizen','culture'].forEach(k=>{if(fileStore[k]&&fileStore[k].length)renderFileSection(k+'frame',k);});
@@ -1624,27 +1731,6 @@ async function loadFromFirebase(){
         fileStore[k]=d.data().items;
       }
     }));
-
-  } catch(e){
-    console.warn('Firebase load error:',e.message);
-  }
-
-  clearTimeout(timeout);
-
-  // Render everything
-  renderSS(); renderMini(); renderKyt(); renderHero(); buildCal(); buildDis();
-  buildKytCalTabs(); buildKytCalGrid();
-  updateStartDisplay(); calcDays();
-
-  // Render tab files
-  ['kpi','cpo','nurse','audit','ncr','kaizen','culture'].forEach(k=>{
-    if(fileStore[k]&&fileStore[k].length) renderFileSection(k+'frame',k);
-  });
-
-  // Hide loading overlay
-  const ov=document.getElementById('fb-loading');
-  if(ov) ov.style.display='none';
-}
 
 // DISEASE CHART
 function buildDis(){
