@@ -925,7 +925,10 @@ async function loadFromFirebase(){
   const timeout=setTimeout(()=>{
     const ov=document.getElementById('fb-loading');
     if(ov) ov.style.display='none';
-  },5000);
+    renderSS(); renderMini(); renderKyt(); renderHero(); buildCal(); buildDis();
+    buildKytCalTabs(); buildKytCalGrid();
+    updateStartDisplay(); calcDays();
+  },3000);
 
   try{
     // โหลดจาก data.json บน GitHub Pages
