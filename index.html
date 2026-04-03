@@ -789,14 +789,21 @@ function fbSaveCalData(){ localStorage.setItem('calData',JSON.stringify(calData)
 function fbSaveSettings(){ autoSave(); }
 
 // ─── AUTO PUSH to GitHub ───
-const GH_TOKEN=atob('Z2hwX2RKcmFDTm1jTENRV1REVUc5cTUxZWs4VmV0WHQ0SjRWZUhtdQ==');
 const GH_REPO='central-lab-pcg/safetyboard';
 const GH_FILE='data.json';
+function getToken(){ return localStorage.getItem('gh_token')||''; }
 
 async function exportData(){
+  let token=getToken();
+  if(!token){
+    token=prompt('กรุณาใส่ GitHub Token:\n(จะถูกบันทึกในเครื่องนี้ ไม่ต้องใส่ทุกครั้ง)');
+    if(!token) return;
+    localStorage.setItem('gh_token', token);
+  }
+
   const btn=document.getElementById('export-btn');
   if(btn){btn.textContent='⏳ กำลังบันทึก...';btn.disabled=true;}
-  
+
   const data={
     newsData, heroData,
     heroImages: heroImages.map(h=>h.url),
@@ -805,34 +812,43 @@ async function exportData(){
     fileStore: Object.fromEntries(Object.entries(fileStore).map(([k,v])=>[k,v.map(f=>({url:f.url,name:f.name,ts:f.ts}))]))
   };
   const content=btoa(unescape(encodeURIComponent(JSON.stringify(data,null,2))));
-  
+
   try{
-    // ดึง SHA ของไฟล์เดิมก่อน (ถ้ามี)
     let sha='';
     const check=await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`,{
-      headers:{Authorization:`token ${GH_TOKEN}`,'Accept':'application/vnd.github.v3+json'}
+      headers:{Authorization:`token ${token}`,'Accept':'application/vnd.github.v3+json'}
     });
     if(check.ok){const j=await check.json(); sha=j.sha||'';}
-    
-    // Push ไฟล์ใหม่
+    else if(check.status===401){
+      localStorage.removeItem('gh_token');
+      alert('❌ Token ไม่ถูกต้อง กรุณาใส่ใหม่');
+      if(btn){btn.textContent='💾 Export';btn.style.background='#f0a500';btn.disabled=false;}
+      return;
+    }
+
     const body={message:'update data.json',content};
     if(sha) body.sha=sha;
     const res=await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`,{
       method:'PUT',
-      headers:{Authorization:`token ${GH_TOKEN}`,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
+      headers:{Authorization:`token ${token}`,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
       body:JSON.stringify(body)
     });
-    
+
     if(res.ok){
       if(btn){btn.textContent='✅ บันทึกแล้ว!';btn.style.background='#1a7a3c';}
       setTimeout(()=>{if(btn){btn.textContent='💾 Export';btn.style.background='#f0a500';btn.disabled=false;}},3000);
-      alert('✅ บันทึกข้อมูลขึ้น GitHub แล้ว!\nรอ 1-2 นาที แล้วรีเฟรชหน้าเว็บ ทุกคนจะเห็นข้อมูลใหม่ครับ');
     } else {
       const err=await res.json();
-      throw new Error(err.message||'Push failed');
+      if(res.status===401){
+        localStorage.removeItem('gh_token');
+        alert('❌ Token หมดอายุ กรุณากด Export อีกครั้งเพื่อใส่ Token ใหม่');
+      } else {
+        alert('❌ เกิดข้อผิดพลาด: '+(err.message||res.status));
+      }
+      if(btn){btn.textContent='💾 Export';btn.style.background='#f0a500';btn.disabled=false;}
     }
   } catch(e){
-    alert('❌ เกิดข้อผิดพลาด: '+e.message+'\nลองใหม่อีกครั้งครับ');
+    alert('❌ เกิดข้อผิดพลาด: '+e.message);
     if(btn){btn.textContent='💾 Export';btn.style.background='#f0a500';btn.disabled=false;}
   }
 }
