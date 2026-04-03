@@ -6,9 +6,8 @@
 <title>Safety Board Online — PCG Central Lab</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
-<!-- Firebase SDK -->
+<!-- Firebase Storage SDK only (for file uploads) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <script>
 firebase.initializeApp({
@@ -19,10 +18,73 @@ firebase.initializeApp({
   messagingSenderId:"215203729064",
   appId:"1:215203729064:web:ea2c1f0dc70d2f10273c9d"
 });
-const db=firebase.firestore(firebase.app(),'safety-board-848b7');
-db.settings({experimentalAutoDetectLongPolling:true,merge:true});
-db.enableNetwork().catch(()=>{});
 const storage=firebase.storage();
+
+// ─── Firestore via REST API (ไม่ใช้ WebSocket ไม่มีปัญหา offline) ───
+const FS_BASE='https://firestore.googleapis.com/v1/projects/safety-board-848b7/databases/safety-board-848b7/documents';
+const API_KEY='AIzaSyDJy_DPNu0wHZgNeOQ90Io1gSZJ7wkKsXE';
+
+// แปลง JS object → Firestore REST format
+function toFS(obj){
+  const fields={};
+  for(const k in obj){
+    const v=obj[k];
+    if(v===null||v===undefined) fields[k]={nullValue:null};
+    else if(typeof v==='boolean') fields[k]={booleanValue:v};
+    else if(typeof v==='number') fields[k]={doubleValue:v};
+    else if(typeof v==='string') fields[k]={stringValue:v};
+    else if(Array.isArray(v)) fields[k]={arrayValue:{values:v.map(i=>typeof i==='object'?{mapValue:{fields:toFS(i).fields}}:{stringValue:String(i)})}};
+    else if(typeof v==='object') fields[k]={mapValue:{fields:toFS(v).fields}};
+  }
+  return {fields};
+}
+
+// แปลง Firestore REST format → JS object
+function fromFS(doc){
+  if(!doc||!doc.fields) return {};
+  const out={};
+  for(const k in doc.fields){
+    const v=doc.fields[k];
+    if(v.stringValue!==undefined) out[k]=v.stringValue;
+    else if(v.booleanValue!==undefined) out[k]=v.booleanValue;
+    else if(v.doubleValue!==undefined) out[k]=v.doubleValue;
+    else if(v.integerValue!==undefined) out[k]=Number(v.integerValue);
+    else if(v.nullValue!==undefined) out[k]=null;
+    else if(v.arrayValue) out[k]=(v.arrayValue.values||[]).map(i=>i.mapValue?fromFS(i.mapValue):i.stringValue||i.doubleValue||i.integerValue||null);
+    else if(v.mapValue) out[k]=fromFS(v.mapValue);
+  }
+  return out;
+}
+
+// GET document
+async function fsGet(docPath){
+  const r=await fetch(`${FS_BASE}/${docPath}?key=${API_KEY}`);
+  if(!r.ok) return null;
+  const d=await r.json();
+  return fromFS(d);
+}
+
+// SET document (patch)
+async function fsSet(docPath,data){
+  const body=JSON.stringify(toFS(data));
+  const fields=Object.keys(data).map(k=>`updateMask.fieldPaths=${k}`).join('&');
+  await fetch(`${FS_BASE}/${docPath}?${fields}&key=${API_KEY}`,{
+    method:'PATCH',
+    headers:{'Content-Type':'application/json'},
+    body
+  });
+}
+
+// db object ที่ใช้แทน Firestore SDK
+const db={
+  collection:(col)=>({
+    doc:(id)=>({
+      get:()=>fsGet(`${col}/${id}`).then(d=>({exists:!!d,data:()=>d})),
+      set:(data)=>fsSet(`${col}/${id}`,data)
+    }),
+    add:(data)=>fsSet(`${col}/${Date.now()}`,data)
+  })
+};
 </script>
 <style>
 :root{
