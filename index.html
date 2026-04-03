@@ -19,7 +19,7 @@ firebase.initializeApp({
   messagingSenderId:"215203729064",
   appId:"1:215203729064:web:ea2c1f0dc70d2f10273c9d"
 });
-const db=firebase.firestore();
+const db=firebase.firestore(firebase.app(),'safety-board-848b7');
 db.settings({experimentalAutoDetectLongPolling:true,merge:true});
 db.enableNetwork().catch(()=>{});
 const storage=firebase.storage();
