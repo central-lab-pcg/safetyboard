@@ -794,15 +794,8 @@ const GH_FILE='data.json';
 function getToken(){ return localStorage.getItem('gh_token')||''; }
 
 async function exportData(){
-  let token=getToken();
-  if(!token){
-    token=prompt('กรุณาใส่ GitHub Token:\n(จะถูกบันทึกในเครื่องนี้ ไม่ต้องใส่ทุกครั้ง)');
-    if(!token) return;
-    localStorage.setItem('gh_token', token);
-  }
-
   const btn=document.getElementById('export-btn');
-  if(btn){btn.textContent='⏳ กำลังบันทึก...';btn.disabled=true;}
+  if(btn){btn.textContent='⏳ กำลังสร้างไฟล์...';btn.disabled=true;}
 
   const data={
     newsData, heroData,
@@ -811,46 +804,18 @@ async function exportData(){
     kytCalPdfs, calData, holidaysList, startDateStr,
     fileStore: Object.fromEntries(Object.entries(fileStore).map(([k,v])=>[k,v.map(f=>({url:f.url,name:f.name,ts:f.ts}))]))
   };
-  const content=btoa(unescape(encodeURIComponent(JSON.stringify(data,null,2))));
 
-  try{
-    let sha='';
-    const check=await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`,{
-      headers:{Authorization:`token ${token}`,'Accept':'application/vnd.github.v3+json'}
-    });
-    if(check.ok){const j=await check.json(); sha=j.sha||'';}
-    else if(check.status===401){
-      localStorage.removeItem('gh_token');
-      alert('❌ Token ไม่ถูกต้อง กรุณาใส่ใหม่');
-      if(btn){btn.textContent='💾 Export';btn.style.background='#f0a500';btn.disabled=false;}
-      return;
-    }
+  // ดาวน์โหลดไฟล์ data.json
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='data.json';
+  a.click();
 
-    const body={message:'update data.json',content};
-    if(sha) body.sha=sha;
-    const res=await fetch(`https://api.github.com/repos/${GH_REPO}/contents/${GH_FILE}`,{
-      method:'PUT',
-      headers:{Authorization:`token ${token}`,'Content-Type':'application/json','Accept':'application/vnd.github.v3+json'},
-      body:JSON.stringify(body)
-    });
+  if(btn){btn.textContent='✅ ดาวน์โหลดแล้ว!';btn.style.background='#1a7a3c';}
+  setTimeout(()=>{if(btn){btn.textContent='💾 Export';btn.style.background='#f0a500';btn.disabled=false;}},3000);
 
-    if(res.ok){
-      if(btn){btn.textContent='✅ บันทึกแล้ว!';btn.style.background='#1a7a3c';}
-      setTimeout(()=>{if(btn){btn.textContent='💾 Export';btn.style.background='#f0a500';btn.disabled=false;}},3000);
-    } else {
-      const err=await res.json();
-      if(res.status===401){
-        localStorage.removeItem('gh_token');
-        alert('❌ Token หมดอายุ กรุณากด Export อีกครั้งเพื่อใส่ Token ใหม่');
-      } else {
-        alert('❌ เกิดข้อผิดพลาด: '+(err.message||res.status));
-      }
-      if(btn){btn.textContent='💾 Export';btn.style.background='#f0a500';btn.disabled=false;}
-    }
-  } catch(e){
-    alert('❌ เกิดข้อผิดพลาด: '+e.message);
-    if(btn){btn.textContent='💾 Export';btn.style.background='#f0a500';btn.disabled=false;}
-  }
+  alert('✅ ได้ไฟล์ data.json แล้ว!\n\nขั้นตอนต่อไป:\n1. ไปที่ github.com/central-lab-pcg/safetyboard\n2. กด "Add file" → "Upload files"\n3. ลาก data.json วางลงไป\n4. กด "Commit changes"\n5. รอ 1 นาที → รีเฟรชเว็บ ✅');
 }
 
 // ─── LOAD from GitHub data.json (background) ───
@@ -1007,23 +972,17 @@ let heroImgIdx=0;
 
 function handleHeroImages(e){
   const files=Array.from(e.target.files); if(!files.length) return;
-  const btn=e.target.closest('label');
-  if(btn) btn.textContent='⏳ กำลังอัปโหลด...';
+  const lbl=e.target.closest('label'); if(lbl) lbl.textContent='⏳ กำลังอัปโหลด...';
   Promise.all(Array.from(files).map(async f=>{
     const isPDF=f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf');
-    let url;
-    try{
-      const ref=storage.ref('hero/'+Date.now()+'_'+f.name);
-      const snap=await ref.put(f);
-      url=await snap.ref.getDownloadURL();
-    }catch(err){url=URL.createObjectURL(f);}
+    const url=isPDF?URL.createObjectURL(f):await uploadImage(f);
     return {url,name:f.name,isPDF};
   })).then(items=>{
     items.forEach(it=>heroImages.unshift(it));
     heroImgIdx=0;
-    db.collection('settings').doc('heroImages').set({images:heroImages.map(h=>h.url)});
+    autoSave();
     renderHero();
-    if(btn) btn.textContent='🖼 เลือกรูป Hero';
+    if(lbl) lbl.textContent='🖼 เลือกรูป Hero';
   });
 }
 
@@ -1179,26 +1138,46 @@ function deleteHeroImg(i){
   renderHero();
 }
 
-// KYT IMAGE SLIDESHOW — same height as current news (220px)
+// ─── แปลงรูปเป็น base64 เก็บใน data.json ───
+async function uploadImage(file){
+  return new Promise((resolve)=>{
+    // ย่อขนาดรูปก่อนเพื่อไม่ให้ไฟล์ใหญ่เกินไป
+    const MAX=1200;
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        let w=img.width, h=img.height;
+        if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+        if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
+        canvas.width=w; canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg',0.82));
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// KYT IMAGE SLIDESHOW
 let kytImages=[];
 let kytImgIdx=0;
 
 function handleKytImages(e){
   const files=Array.from(e.target.files); if(!files.length) return;
+  const lbl=e.target.closest('label'); if(lbl) lbl.textContent='⏳ กำลังอัปโหลด...';
   Promise.all(Array.from(files).map(async f=>{
     const isPDF=f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf');
-    let url;
-    try{
-      const ref=storage.ref('kyt/'+Date.now()+'_'+f.name);
-      const snap=await ref.put(f);
-      url=await snap.ref.getDownloadURL();
-    }catch(err){url=URL.createObjectURL(f);}
+    const url=isPDF?URL.createObjectURL(f):await uploadImage(f);
     return {url,name:f.name,isPDF};
   })).then(items=>{
     items.forEach(it=>kytImages.unshift(it));
     kytImgIdx=0;
-    db.collection('settings').doc('kytImages').set({images:kytImages.map(k=>k.url)});
+    autoSave();
     renderKyt();
+    if(lbl) lbl.textContent='🖼 อัปรูป KYT';
   });
 }
 
@@ -1432,12 +1411,7 @@ function handleKytCalPdf(e){
   const files=Array.from(e.target.files); if(!files.length) return;
   Promise.all(Array.from(files).map(async f=>{
     const isPDF=f.type==='application/pdf'||f.name.toLowerCase().endsWith('.pdf');
-    let url;
-    try{
-      const ref=storage.ref('kytcal/'+Date.now()+'_'+f.name);
-      const snap=await ref.put(f);
-      url=await snap.ref.getDownloadURL();
-    }catch(err){url=URL.createObjectURL(f);}
+    const url=isPDF?URL.createObjectURL(f):await uploadImage(f);
     let m=kytCalMonthSel;
     KYTCAL_MONTHS_FULL.forEach((mn,i)=>{ if(f.name.includes(mn)||f.name.includes(KYTCAL_MONTHS_SHORT[i])) m=i; });
     return {url, name:f.name, month:m, isPDF};
@@ -1447,7 +1421,7 @@ function handleKytCalPdf(e){
       kytCalPdfs.push(item);
       kytCalMonthSel=item.month;
     });
-    db.collection('settings').doc('kytCalPdfs').set({items:kytCalPdfs});
+    autoSave();
     buildKytCalTabs();
     buildKytCalGrid();
   });
@@ -1554,36 +1528,26 @@ async function saveNews(){
   const raw=document.getElementById('ndate').value, dt=raw?new Date(raw):new Date();
   const ds=`${dt.getDate()} ${MSHORT[dt.getMonth()]} ${String(dt.getFullYear()).slice(-2)}`;
   const urlImg=document.getElementById('nimg').value.trim();
-
-  // Show loading
   const saveBtn=document.querySelector('#mnews .bsave');
   if(saveBtn){saveBtn.textContent='⏳ กำลังอัปโหลด...';saveBtn.disabled=true;}
-
   let imgFinal='', pdfUrlFinal='', pdfNameFinal='';
   try{
     if(newsFilePending){
       if(newsFilePending.type==='pdf'){
-        // upload PDF to Storage
-        const ref=storage.ref('news/'+Date.now()+'_'+newsFilePending.name);
-        const snap=await ref.put(newsFilePending.file);
-        pdfUrlFinal=await snap.ref.getDownloadURL();
+        pdfUrlFinal=newsFilePending.url;
         pdfNameFinal=newsFilePending.name;
       } else {
-        // upload image to Storage
-        const ref=storage.ref('news/'+Date.now()+'_'+newsFilePending.name);
-        const snap=await ref.put(newsFilePending.file);
-        imgFinal=await snap.ref.getDownloadURL();
+        imgFinal=await uploadImage(newsFilePending.file);
       }
     }
     if(urlImg) imgFinal=urlImg;
-
     const item={id:Date.now(),title:t,detail:document.getElementById('ndetail').value,date:ds,tag:document.getElementById('ntag').value,img:imgFinal,pdfUrl:pdfUrlFinal,pdfName:pdfNameFinal};
     newsData.unshift(item);
     fbSaveNews();
     renderSS(); renderMini(); closeModal('mnews');
-  } catch(e){
-    alert('เกิดข้อผิดพลาดในการอัปโหลด: '+e.message);
-  } finally {
+  }catch(e){
+    alert('เกิดข้อผิดพลาด: '+e.message);
+  }finally{
     if(saveBtn){saveBtn.textContent='💾 บันทึก';saveBtn.disabled=false;}
     newsFilePending=null;
   }
