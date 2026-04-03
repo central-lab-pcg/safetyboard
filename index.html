@@ -1197,7 +1197,9 @@ function renderKyt(){
   if(k.isPDF){
     wrap.innerHTML=`<div class="kyt-img-box" style="min-height:auto;position:relative"><iframe src="${k.url}#toolbar=0&navpanes=0&scrollbar=0" style="width:100%;height:500px;border:none;display:block"></iframe>${navHtml}${delBtn}</div>`;
   } else {
-    wrap.innerHTML=`<div class="kyt-img-box" style="position:relative" onclick="openKytFull('${k.url}')"><img src="${k.url}">${navHtml}${delBtn}</div>`;
+    wrap.innerHTML=`<div class="kyt-img-box" style="position:relative"><img id="kyt-main-img" src="${k.url}" style="width:100%;display:block;cursor:pointer">${navHtml}${delBtn}</div>`;
+    const im=document.getElementById('kyt-main-img');
+    if(im) im.onclick=()=>openKytFull(k.url);
   }
 }
 function kytMove(d){
@@ -1472,13 +1474,16 @@ function buildKytCalGrid(){
         <iframe src="${item.url}#toolbar=0&navpanes=0&scrollbar=0" style="width:100%;height:600px;border:none;display:block"></iframe>
       </div>`;
     } else {
-      g.innerHTML=`<div style="border-radius:var(--rlg);overflow:hidden;box-shadow:var(--sh);position:relative;background:#111">
+      g.innerHTML=`<div style="border-radius:var(--rlg);overflow:hidden;box-shadow:var(--sh);background:#111">
         <div style="background:var(--green);padding:7px 12px;display:flex;align-items:center;gap:6px">
           <span style="font-size:12px;color:#fff;flex:1">📅 ${KYTCAL_MONTHS_FULL[kytCalMonthSel]} — ${item.name}</span>
           ${delBtn}
         </div>
-        <img src="${item.url}" style="width:100%;display:block;object-fit:contain;cursor:pointer" onclick="openKytFull('${item.url}')">
+        <img id="kytcal-img" src="${item.url}" style="width:100%;display:block;object-fit:contain;cursor:pointer">
       </div>`;
+      // bind click after insert (avoid base64 in onclick attr)
+      const img=document.getElementById('kytcal-img');
+      if(img) img.onclick=()=>openKytFull(item.url);
     }
   } else {
     g.innerHTML=`<div class="ph" style="padding:28px">
