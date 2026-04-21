@@ -453,15 +453,42 @@ body{font-family:'IBM Plex Sans Thai',Sarabun,Arial,sans-serif;background:var(--
 <div class="sec" id="tab-plan">
   <div class="card"><div class="ctitle"><span class="cbar"></span>แผนงานด้านความปลอดภัย</div>
     <div class="lgrid" style="margin-bottom:14px;">
-      <a class="lcard" href="https://storage2.me-qr.com/pdf/879453ab-fd44-4ed4-a82d-e4b094848a22.pdf" target="_blank">
+      <a class="lcard" href="https://storage2.me-qr.com/pdf/879453ab-fd44-4ed4-a82d-e4b094848a22.pdf" target="_blank" rel="noopener" onclick="return openPlanPdf(event)">
         <div class="lic lig">📄</div><div><div class="lname">แผนงาน (PDF)</div></div><span class="lbdg lpdf">PDF</span></a>
-      <a class="lcard" href="https://view.officeapps.live.com/op/view.aspx?src=https%3A%2F%2Fstorage2.me-qr.com%2Fexcel%2F9d00e368-878b-45e8-84c4-e7f45605d600.xlsx" target="_blank">
+      <a class="lcard" href="https://view.officeapps.live.com/op/view.aspx?src=https%3A%2F%2Fstorage2.me-qr.com%2Fexcel%2F9d00e368-878b-45e8-84c4-e7f45605d600.xlsx" target="_blank" rel="noopener">
         <div class="lic lig">📊</div><div><div class="lname">แผนงาน (Excel)</div></div><span class="lbdg lbg">Excel</span></a>
     </div>
-    <div class="ifrwrap"><div class="ifrbar"><div class="idot" style="background:#ff5f57"></div><div class="idot" style="background:#febc2e"></div><div class="idot" style="background:#28c840"></div><span style="margin-left:6px;">Safety Work Plan 2569</span></div>
-      <iframe src="https://storage2.me-qr.com/pdf/879453ab-fd44-4ed4-a82d-e4b094848a22.pdf" style="width:100%;height:480px;border:none;display:block;"></iframe></div>
+    <!-- iframe: แสดงเฉพาะ desktop/iOS — Android ซ่อนและแสดงปุ่มแทน -->
+    <div id="plan-iframe-wrap">
+      <div class="ifrwrap"><div class="ifrbar"><div class="idot" style="background:#ff5f57"></div><div class="idot" style="background:#febc2e"></div><div class="idot" style="background:#28c840"></div><span style="margin-left:6px;">Safety Work Plan 2569</span></div>
+        <iframe src="https://storage2.me-qr.com/pdf/879453ab-fd44-4ed4-a82d-e4b094848a22.pdf" style="width:100%;height:480px;border:none;display:block;"></iframe>
+      </div>
+    </div>
+    <div id="plan-android-btn" style="display:none;margin-top:4px">
+      <a href="https://storage2.me-qr.com/pdf/879453ab-fd44-4ed4-a82d-e4b094848a22.pdf" target="_blank" rel="noopener"
+         style="display:flex;align-items:center;justify-content:center;gap:10px;background:var(--green);color:#fff;padding:14px;border-radius:var(--r);font-size:14px;font-weight:700;text-decoration:none">
+        📄 เปิดไฟล์แผนงาน PDF
+      </a>
+    </div>
   </div>
 </div>
+<script>
+(function(){
+  var ua=navigator.userAgent||'';
+  var isAndroid=/Android/i.test(ua);
+  if(isAndroid){
+    var iw=document.getElementById('plan-iframe-wrap');
+    var ab=document.getElementById('plan-android-btn');
+    if(iw) iw.style.display='none';
+    if(ab) ab.style.display='block';
+  }
+})();
+function openPlanPdf(e){
+  var ua=navigator.userAgent||'';
+  if(/Android/i.test(ua)){ return true; } // let href handle it naturally
+  return true;
+}
+</script>
 
 <!-- ══ รายงาน ══ -->
 <div class="sec" id="tab-report">
