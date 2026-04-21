@@ -12,6 +12,20 @@
 const storage={ref:()=>({put:async(f)=>({ref:{getDownloadURL:async()=>URL.createObjectURL(f)}})})};
 const db={collection:()=>({doc:()=>({get:async()=>({exists:false,data:()=>({})}),set:async()=>{}}),add:async()=>{}})};
 </script>
+
+<script>
+var IS_ANDROID = /Android/i.test(navigator.userAgent||'');
+
+// PDF helper: on Android show open-button, on others show iframe
+function pdfEmbed(url, name, height){
+  height = height||'500px';
+  if(IS_ANDROID){
+    return '<a href="'+url+'" target="_blank" rel="noopener" style="display:flex;align-items:center;justify-content:center;gap:10px;background:var(--green);color:#fff;padding:16px;border-radius:var(--r);font-size:14px;font-weight:700;text-decoration:none;margin-top:4px">📄 เปิด '+(name||'PDF')+'</a>';
+  }
+  return '<iframe src="'+url+'" style="width:100%;height:'+height+';border:none;display:block"></iframe>';
+}
+</script>
+
 <style>
 :root{
   --green:#1a7a3c;--greenl:#2ea84f;--greenpale:#e8f5ed;--greendim:#d1eeda;--greenbrd:#b2ddc0;
@@ -461,34 +475,12 @@ body{font-family:'IBM Plex Sans Thai',Sarabun,Arial,sans-serif;background:var(--
     <!-- iframe: แสดงเฉพาะ desktop/iOS — Android ซ่อนและแสดงปุ่มแทน -->
     <div id="plan-iframe-wrap">
       <div class="ifrwrap"><div class="ifrbar"><div class="idot" style="background:#ff5f57"></div><div class="idot" style="background:#febc2e"></div><div class="idot" style="background:#28c840"></div><span style="margin-left:6px;">Safety Work Plan 2569</span></div>
-        <iframe src="https://storage2.me-qr.com/pdf/879453ab-fd44-4ed4-a82d-e4b094848a22.pdf" style="width:100%;height:480px;border:none;display:block;"></iframe>
+        <div id="plan-pdf-slot"></div><script>document.getElementById("plan-pdf-slot").innerHTML=pdfEmbed("https://storage2.me-qr.com/pdf/879453ab-fd44-4ed4-a82d-e4b094848a22.pdf","แผนงาน PDF","480px");</script>
       </div>
     </div>
-    <div id="plan-android-btn" style="display:none;margin-top:4px">
-      <a href="https://storage2.me-qr.com/pdf/879453ab-fd44-4ed4-a82d-e4b094848a22.pdf" target="_blank" rel="noopener"
-         style="display:flex;align-items:center;justify-content:center;gap:10px;background:var(--green);color:#fff;padding:14px;border-radius:var(--r);font-size:14px;font-weight:700;text-decoration:none">
-        📄 เปิดไฟล์แผนงาน PDF
-      </a>
     </div>
-  </div>
 </div>
-<script>
-(function(){
-  var ua=navigator.userAgent||'';
-  var isAndroid=/Android/i.test(ua);
-  if(isAndroid){
-    var iw=document.getElementById('plan-iframe-wrap');
-    var ab=document.getElementById('plan-android-btn');
-    if(iw) iw.style.display='none';
-    if(ab) ab.style.display='block';
-  }
-})();
-function openPlanPdf(e){
-  var ua=navigator.userAgent||'';
-  if(/Android/i.test(ua)){ return true; } // let href handle it naturally
-  return true;
-}
-</script>
+
 
 <!-- ══ รายงาน ══ -->
 <div class="sec" id="tab-report">
@@ -1173,8 +1165,7 @@ function renderSS(){
 
     let body='';
     if(n.pdfUrl){
-      body=`<iframe src="${n.pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&page=1&zoom=page-fit" class="sld-iframe"></iframe>
-            <div style="position:absolute;top:10px;left:10px;background:rgba(192,57,43,.9);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;z-index:4;pointer-events:none">📄 PDF</div>`;
+      body=IS_ANDROID?`<div class="sld-ph" style="background:#1a2e22"><div style="font-size:44px">📄</div><div style="font-size:14px;color:#fff;font-weight:600;text-align:center;margin-top:8px">${n.title}</div><a href="${n.pdfUrl}" target="_blank" rel="noopener" style="margin-top:12px;background:#fff;color:var(--green);padding:10px 20px;border-radius:20px;font-size:13px;font-weight:700;text-decoration:none">เปิด PDF</a></div>`:`<iframe src="${n.pdfUrl}#toolbar=0&navpanes=0&scrollbar=0&page=1&zoom=page-fit" class="sld-iframe"></iframe><div style="position:absolute;top:10px;left:10px;background:rgba(192,57,43,.9);color:#fff;font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;z-index:4;pointer-events:none">📄 PDF</div>`;
     } else if(n.img){
       body=`<img src="${n.img}" class="sld-img">`;
     } else {
@@ -1251,7 +1242,7 @@ function openNewsDetail(n){
   const content=document.getElementById('news-detail-content');
   if(n.pdfUrl){
     // PDF — full iframe
-    content.innerHTML=`<iframe src="${n.pdfUrl}#toolbar=0&navpanes=0&scrollbar=0" style="width:100%;height:100%;border:none;display:block;min-height:85vh"></iframe>`;
+    content.innerHTML=IS_ANDROID?'<div style="display:flex;align-items:center;justify-content:center;height:100%"><a href="'+n.pdfUrl+'" target="_blank" rel="noopener" style="background:var(--green);color:#fff;padding:16px 28px;border-radius:12px;font-size:15px;font-weight:700;text-decoration:none">📄 เปิด PDF</a></div>':`<iframe src="${n.pdfUrl}#toolbar=0&navpanes=0&scrollbar=0" style="width:100%;height:100%;border:none;display:block;min-height:85vh"></iframe>`;
   } else if(n.img){
     // Image — fit screen, tap to close
     content.innerHTML=`<img src="${n.img}" style="max-width:100%;max-height:100%;object-fit:contain;display:block;cursor:zoom-in" onclick="this.style.transform=this.style.transform?'':'scale(1.6)';this.style.transition='.3s'" onerror="this.style.display='none'">`;
@@ -1526,7 +1517,7 @@ function renderFileSection(tid,key){
   // show current (first)
   const cur=files[0];
   const delBtn=adminOn?`<button onclick="deleteFileCurrent('${tid}','${key}')" style="margin-left:auto;background:#c0392b;border:none;color:#fff;padding:4px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🗑 ลบ</button>`:'';
-  frame.innerHTML=`<div class="ifrwrap"><div class="ifrbar"><div class="idot" style="background:#ff5f57"></div><div class="idot" style="background:#febc2e"></div><div class="idot" style="background:#28c840"></div><span style="margin-left:6px;flex:1">📄 ${cur.name}</span><span style="font-size:10px;opacity:.7;margin-right:6px">${cur.ts}</span>${delBtn}</div><iframe src="${cur.url}" style="width:100%;height:500px;border:none;display:block"></iframe></div>`;
+  frame.innerHTML='<div class="ifrwrap"><div class="ifrbar"><div class="idot" style="background:#ff5f57"></div><div class="idot" style="background:#febc2e"></div><div class="idot" style="background:#28c840"></div><span style="margin-left:6px;flex:1">📄 '+cur.name+'</span><span style="font-size:10px;opacity:.7;margin-right:6px">'+cur.ts+'</span>'+delBtn+'</div>'+pdfEmbed(cur.url,cur.name,"500px")+'</div>';
   // show history
   if(hist && files.length>1){
     hist.innerHTML=`<div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">📋 ไฟล์ก่อนหน้า</div>`+
@@ -1561,7 +1552,7 @@ function viewOldFile(key,idx){
 function loadFile(inp,tid){
   const f=inp.files[0]; if(!f) return;
   const url=URL.createObjectURL(f);
-  document.getElementById(tid).innerHTML=`<div class="ifrwrap"><div class="ifrbar"><div class="idot" style="background:#ff5f57"></div><div class="idot" style="background:#febc2e"></div><div class="idot" style="background:#28c840"></div><span style="margin-left:6px;">📄 ${f.name}</span></div><iframe src="${url}" style="width:100%;height:480px;border:none;display:block;"></iframe></div>`;
+  document.getElementById(tid).innerHTML='<div class="ifrwrap"><div class="ifrbar"><div class="idot" style="background:#ff5f57"></div><div class="idot" style="background:#febc2e"></div><div class="idot" style="background:#28c840"></div><span style="margin-left:6px;">📄 '+f.name+'</span></div>'+pdfEmbed(url,f.name,"480px")+'</div>';
 }
 function setst(id,inp){const e=document.getElementById(id);if(e&&inp.files[0])e.textContent='✅ '+inp.files[0].name;}
 
@@ -1634,7 +1625,7 @@ function buildKytCalGrid(){
           <span style="margin-left:6px;flex:1">📅 ${KYTCAL_MONTHS_FULL[kytCalMonthSel]} — ${item.name}</span>
           ${delBtn}
         </div>
-        <iframe src="${item.url}#toolbar=0&navpanes=0&scrollbar=0" style="width:100%;height:600px;border:none;display:block"></iframe>
+        '+pdfEmbed(item.url,item.name,"600px")+'
       </div>`;
     } else {
       g.innerHTML=`<div style="border-radius:var(--rlg);overflow:hidden;box-shadow:var(--sh);background:#111">
