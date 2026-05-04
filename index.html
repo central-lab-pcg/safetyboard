@@ -453,13 +453,13 @@ body{font-family:'IBM Plex Sans Thai',Sarabun,Arial,sans-serif;background:var(--
   <div id="ukpi" class="usec">
     <div class="utitle">📤 Admin — อัปโหลด KPI</div>
     <label class="ubox" style="display:inline-block;cursor:pointer;max-width:180px">
-      <div class="uico">🎯</div><div class="uname">เลือกไฟล์ PDF</div>
-      <input type="file" accept=".pdf" onchange="loadFileSingle(this,'kpiframe','kpi')">
+      <div class="uico">🎯</div><div class="uname">เลือกไฟล์รูปภาพ</div>
+      <input type="file" accept="image/*" onchange="loadFileSingle(this,'kpiframe','kpi')">
     </label>
   </div>
   <div class="card">
     <div class="ctitle"><span class="cbar"></span>เป้าหมาย KPI ด้านความปลอดภัย</div>
-    <div id="kpiframe"><div class="ph"><div class="phic">🎯</div><div class="phtit">รอไฟล์ PDF KPI</div><div class="phdesc">เปิด Admin Mode แล้วอัปโหลด</div></div></div>
+    <div id="kpiframe"><div class="ph"><div class="phic">🎯</div><div class="phtit">รอไฟล์รูปภาพ KPI</div><div class="phdesc">เปิด Admin Mode แล้วอัปโหลด</div></div></div>
   </div>
 </div>
 
@@ -615,8 +615,8 @@ body{font-family:'IBM Plex Sans Thai',Sarabun,Arial,sans-serif;background:var(--
   <div id="uaudit" class="usec">
     <div class="utitle">📤 Admin — อัปโหลดผลตรวจ</div>
     <label class="ubox" style="display:inline-block;cursor:pointer;max-width:180px">
-      <div class="uico">🔍</div><div class="uname">เลือกไฟล์ PDF</div>
-      <input type="file" accept=".pdf" onchange="loadFileSingle(this,'auditframe','audit')">
+      <div class="uico">🔍</div><div class="uname">เลือกไฟล์รูปภาพ</div>
+      <input type="file" accept="image/*" onchange="loadFileSingle(this,'auditframe','audit')">
     </label>
   </div>
   <div class="card">
@@ -631,8 +631,8 @@ body{font-family:'IBM Plex Sans Thai',Sarabun,Arial,sans-serif;background:var(--
   <div id="uncr" class="usec">
     <div class="utitle">📤 Admin — อัปโหลด NCR</div>
     <label class="ubox" style="display:inline-block;cursor:pointer;max-width:180px">
-      <div class="uico">⚠️</div><div class="uname">เลือกไฟล์ PDF</div>
-      <input type="file" accept=".pdf" onchange="loadFileSingle(this,'ncrframe','ncr')">
+      <div class="uico">⚠️</div><div class="uname">เลือกไฟล์รูปภาพ</div>
+      <input type="file" accept="image/*" onchange="loadFileSingle(this,'ncrframe','ncr')">
     </label>
   </div>
   <div class="card">
@@ -647,8 +647,8 @@ body{font-family:'IBM Plex Sans Thai',Sarabun,Arial,sans-serif;background:var(--
   <div id="ukaizen" class="usec">
     <div class="utitle">📤 Admin — อัปโหลด Kaizen</div>
     <label class="ubox" style="display:inline-block;cursor:pointer;max-width:180px">
-      <div class="uico">💡</div><div class="uname">เลือกไฟล์ PDF</div>
-      <input type="file" accept=".pdf" onchange="loadFileSingle(this,'kaizenframe','kaizen')">
+      <div class="uico">💡</div><div class="uname">เลือกไฟล์รูปภาพ</div>
+      <input type="file" accept="image/*" onchange="loadFileSingle(this,'kaizenframe','kaizen')">
     </label>
   </div>
   <div class="card">
@@ -663,8 +663,8 @@ body{font-family:'IBM Plex Sans Thai',Sarabun,Arial,sans-serif;background:var(--
   <div id="uculture" class="usec">
     <div class="utitle">📤 Admin — อัปโหลดวัฒนธรรม PCG</div>
     <label class="ubox" style="display:inline-block;cursor:pointer;max-width:180px">
-      <div class="uico">🏅</div><div class="uname">เลือกไฟล์ PDF</div>
-      <input type="file" accept=".pdf" onchange="loadFileSingle(this,'cultureframe','culture')">
+      <div class="uico">🏅</div><div class="uname">เลือกไฟล์รูปภาพ</div>
+      <input type="file" accept="image/*" onchange="loadFileSingle(this,'cultureframe','culture')">
     </label>
   </div>
   <div class="card">
@@ -682,13 +682,13 @@ body{font-family:'IBM Plex Sans Thai',Sarabun,Arial,sans-serif;background:var(--
       <strong>⚠️</strong> ข้อมูลอยู่ในหน่วยความจำชั่วคราว — รีเฟรชหน้าจอจะหาย
     </div>
     <div class="ugrid">
-      <div class="ubox" onclick="document.getElementById('uu-kpi').click()"><div class="uico">🎯</div><div class="uname">KPI</div><div class="udesc">PDF เป้าหมาย</div><input id="uu-kpi" type="file" accept=".pdf" onchange="loadFile(this,'kpiframe');setst('st-kpi',this)"><div class="ust" id="st-kpi"></div></div>
+      <div class="ubox" onclick="document.getElementById('uu-kpi').click()"><div class="uico">🎯</div><div class="uname">KPI</div><div class="udesc">รูปภาพ KPI</div><input id="uu-kpi" type="file" accept="image/*" onchange="loadFileSingle(this,'kpiframe','kpi');setst('st-kpi',this)"><div class="ust" id="st-kpi"></div></div>
       <div class="ubox" onclick="document.getElementById('uu-cpo').click()"><div class="uico">📊</div><div class="uname">รายงาน คปอ.</div><div class="udesc">PDF รายงานประชุม</div><input id="uu-cpo" type="file" accept=".pdf" onchange="loadFile(this,'cpoframe');setst('st-cpo',this)"><div class="ust" id="st-cpo"></div></div>
       <div class="ubox" onclick="document.getElementById('uu-nurse').click()"><div class="uico">🏥</div><div class="uname">สถิติพยาบาล</div><div class="udesc">PDF สถิติ</div><input id="uu-nurse" type="file" accept=".pdf" onchange="loadFile(this,'nurseframe');setst('st-nurse',this)"><div class="ust" id="st-nurse"></div></div>
-      <div class="ubox" onclick="document.getElementById('uu-audit').click()"><div class="uico">🔍</div><div class="uname">ผลตรวจประเมิน</div><div class="udesc">PDF กราฟผลตรวจ</div><input id="uu-audit" type="file" accept=".pdf" onchange="loadFile(this,'auditframe');setst('st-audit',this)"><div class="ust" id="st-audit"></div></div>
-      <div class="ubox" onclick="document.getElementById('uu-ncr').click()"><div class="uico">⚠️</div><div class="uname">รายงาน NCR</div><div class="udesc">PDF รายงานผิดปกติ</div><input id="uu-ncr" type="file" accept=".pdf" onchange="loadFile(this,'ncrframe');setst('st-ncr',this)"><div class="ust" id="st-ncr"></div></div>
-      <div class="ubox" onclick="document.getElementById('uu-kaizen').click()"><div class="uico">💡</div><div class="uname">Kaizen</div><div class="udesc">PDF ข้อเสนอแนะ</div><input id="uu-kaizen" type="file" accept=".pdf" onchange="loadFile(this,'kaizenframe');setst('st-kaizen',this)"><div class="ust" id="st-kaizen"></div></div>
-      <div class="ubox" onclick="document.getElementById('uu-culture').click()"><div class="uico">🏅</div><div class="uname">วัฒนธรรม PCG</div><div class="udesc">PDF วัฒนธรรม</div><input id="uu-culture" type="file" accept=".pdf" onchange="loadFile(this,'cultureframe');setst('st-culture',this)"><div class="ust" id="st-culture"></div></div>
+      <div class="ubox" onclick="document.getElementById('uu-audit').click()"><div class="uico">🔍</div><div class="uname">ผลตรวจประเมิน</div><div class="udesc">รูปภาพผลตรวจ</div><input id="uu-audit" type="file" accept="image/*" onchange="loadFileSingle(this,'auditframe','audit');setst('st-audit',this)"><div class="ust" id="st-audit"></div></div>
+      <div class="ubox" onclick="document.getElementById('uu-ncr').click()"><div class="uico">⚠️</div><div class="uname">รายงาน NCR</div><div class="udesc">รูปภาพ NCR</div><input id="uu-ncr" type="file" accept="image/*" onchange="loadFileSingle(this,'ncrframe','ncr');setst('st-ncr',this)"><div class="ust" id="st-ncr"></div></div>
+      <div class="ubox" onclick="document.getElementById('uu-kaizen').click()"><div class="uico">💡</div><div class="uname">Kaizen</div><div class="udesc">รูปภาพ Kaizen</div><input id="uu-kaizen" type="file" accept="image/*" onchange="loadFileSingle(this,'kaizenframe','kaizen');setst('st-kaizen',this)"><div class="ust" id="st-kaizen"></div></div>
+      <div class="ubox" onclick="document.getElementById('uu-culture').click()"><div class="uico">🏅</div><div class="uname">วัฒนธรรม PCG</div><div class="udesc">รูปภาพวัฒนธรรม</div><input id="uu-culture" type="file" accept="image/*" onchange="loadFileSingle(this,'cultureframe','culture');setst('st-culture',this)"><div class="ust" id="st-culture"></div></div>
     </div>
   </div>
 </div>
@@ -1388,14 +1388,20 @@ function buildCal(){
   // Rebuild HOLIDAYS set fresh (supports any year in list)
   HOLIDAYS=new Set(holidaysList);
 
-  // Auto-tick past workdays not yet marked
+  // Auto-tick: วันก่อนหน้าติ๊กอัตโนมัติ, วันนี้ติ๊กเฉพาะหลัง 17:00
+  const nowHour=new Date().getHours();
   for(let m=0;m<12;m++){
     const days=new Date(yr,m+1,0).getDate();
     for(let d=1;d<=days;d++){
       const dt=new Date(yr,m,d); dt.setHours(0,0,0,0);
       const key=`${yr}-${m+1}-${d}`;
       const isHol=HOLIDAYS.has(key);
-      if(dt<=today && dt.getDay()!==0 && !isHol && !calData[key]){
+      if(dt.getDay()===0||isHol||calData[key]) continue;
+      if(dt.getTime()===today.getTime()){
+        // วันนี้ — ติ๊กเฉพาะเวลา >= 17:00
+        if(nowHour>=17) calData[key]='safe';
+      } else if(dt<today){
+        // วันก่อนหน้า — ติ๊กอัตโนมัติ
         calData[key]='safe';
       }
     }
@@ -1486,23 +1492,46 @@ function openStartDateModal(){
 
 // ─── FILE UPLOAD with history/delete (KPI, Audit, NCR, Kaizen, Culture, Report) ───
 const fileStore={};
+
+// แปลงรูปเป็น base64 ย่อขนาด max 1400px
+function imageToBase64(file){
+  return new Promise(resolve=>{
+    const MAX=1400;
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const canvas=document.createElement('canvas');
+        let w=img.width,h=img.height;
+        if(w>MAX){h=Math.round(h*MAX/w);w=MAX;}
+        if(h>MAX){w=Math.round(w*MAX/h);h=MAX;}
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        resolve(canvas.toDataURL('image/jpeg',0.85));
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
 async function loadFileSingle(inp,tid,key){
   const f=inp.files[0]; if(!f) return;
   inp.disabled=true;
+  const isImg=f.type.startsWith('image/');
+  const ts=new Date().toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});
   let url;
-  try{
-    const ref=storage.ref(`docs/${key}/${Date.now()}_${f.name}`);
-    const snap=await ref.put(f);
-    url=await snap.ref.getDownloadURL();
-  }catch(err){
+  if(isImg){
+    // รูปภาพ: แปลง base64 เก็บใน JSON ได้ถาวร
+    url=await imageToBase64(f);
+  } else {
+    // PDF: blob URL (session เท่านั้น)
     url=URL.createObjectURL(f);
   }
   inp.disabled=false;
-  const ts=new Date().toLocaleDateString('th-TH',{day:'numeric',month:'short',year:'2-digit',hour:'2-digit',minute:'2-digit'});
   if(!fileStore[key]) fileStore[key]=[];
-  fileStore[key].unshift({url,name:f.name,ts});
-  // Save to Firestore (URLs only)
-  db.collection('settings').doc('files_'+key).set({items:fileStore[key].map(f=>({url:f.url,name:f.name,ts:f.ts}))});
+  fileStore[key].unshift({url,name:f.name,ts,isImg});
+  autoSave();
   renderFileSection(tid,key);
 }
 function renderFileSection(tid,key){
@@ -1510,19 +1539,31 @@ function renderFileSection(tid,key){
   const frame=document.getElementById(tid);
   const hist=document.getElementById(key+'-history');
   if(!files.length){
-    frame.innerHTML=`<div class="ph"><div class="phic">📄</div><div class="phtit">รอไฟล์</div></div>`;
+    frame.innerHTML=`<div class="ph"><div class="phic">🖼</div><div class="phtit">รอไฟล์รูปภาพ</div></div>`;
     if(hist) hist.innerHTML='';
     return;
   }
-  // show current (first)
   const cur=files[0];
+  const isImg=cur.isImg||cur.url&&cur.url.startsWith('data:image');
   const delBtn=adminOn?`<button onclick="deleteFileCurrent('${tid}','${key}')" style="margin-left:auto;background:#c0392b;border:none;color:#fff;padding:4px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🗑 ลบ</button>`:'';
-  frame.innerHTML='<div class="ifrwrap"><div class="ifrbar"><div class="idot" style="background:#ff5f57"></div><div class="idot" style="background:#febc2e"></div><div class="idot" style="background:#28c840"></div><span style="margin-left:6px;flex:1">📄 '+cur.name+'</span><span style="font-size:10px;opacity:.7;margin-right:6px">'+cur.ts+'</span>'+delBtn+'</div>'+pdfEmbed(cur.url,cur.name,"500px")+'</div>';
-  // show history
+  const bar=`<div class="ifrbar"><div class="idot" style="background:#ff5f57"></div><div class="idot" style="background:#febc2e"></div><div class="idot" style="background:#28c840"></div><span style="margin-left:6px;flex:1">${isImg?'🖼':'📄'} ${cur.name}</span><span style="font-size:10px;opacity:.7;margin-right:6px">${cur.ts}</span>${delBtn}</div>`;
+  if(isImg){
+    frame.innerHTML=`<div class="ifrwrap">${bar}<img id="img-${tid}" src="${cur.url}" style="width:100%;display:block;cursor:zoom-in;border-radius:0 0 8px 8px"></div>`;
+    const im=document.getElementById('img-'+tid);
+    if(im) im.onclick=()=>{
+      const ov=document.createElement('div');
+      ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out';
+      ov.innerHTML=`<img src="${cur.url}" style="max-width:96vw;max-height:96vh;object-fit:contain;border-radius:8px">`;
+      ov.onclick=()=>document.body.removeChild(ov);
+      document.body.appendChild(ov);
+    };
+  } else {
+    frame.innerHTML=`<div class="ifrwrap">${bar}${pdfEmbed(cur.url,cur.name,"500px")}</div>`;
+  }
   if(hist && files.length>1){
-    hist.innerHTML=`<div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.4px">📋 ไฟล์ก่อนหน้า</div>`+
+    hist.innerHTML=`<div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px">📋 ไฟล์ก่อนหน้า</div>`+
       files.slice(1).map((f,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#fff;border:1px solid var(--brd);border-radius:8px;margin-bottom:6px;cursor:pointer" onclick="viewOldFile('${key}',${i+1})">
-        <span style="font-size:13px">📄</span>
+        <span style="font-size:13px">${f.isImg||f.url?.startsWith('data:image')?'🖼':'📄'}</span>
         <span style="flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</span>
         <span style="font-size:10px;color:var(--text3)">${f.ts}</span>
         ${adminOn?`<button onclick="event.stopPropagation();deleteFileOld('${tid}','${key}',${i+1})" style="background:#c0392b;border:none;color:#fff;width:20px;height:20px;border-radius:50%;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">×</button>`:''}
