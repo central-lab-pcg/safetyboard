@@ -905,7 +905,7 @@ function fbSaveSettings(){ autoSave(); }
 // ─── AUTO PUSH to GitHub ───
 const GH_REPO='central-lab-pcg/safetyboard';
 const GH_FILE='data.json';
-function getToken(){ return localStorage.getItem('gh_token')||atob('Z2hwX1hZUmNGWFRpZEo4bDQxYXYxNEt1b0hNT0F5TzVKUDFaOUtSVA=='); }
+function getToken(){ return localStorage.getItem('gh_token')||''; }
 
 async function exportData(){
   // ขอ token ถ้ายังไม่มี
