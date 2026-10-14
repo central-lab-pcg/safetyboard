@@ -926,11 +926,21 @@ function autoSave(){
     startDateStr,
     fileStore: Object.fromEntries(Object.entries(fileStore).map(([k,v])=>[k,v.map(f=>({url:f.url,name:f.name,ts:f.ts}))]))
   };
-  localStorage.setItem('safetyData', JSON.stringify(data));
+  // เก็บเฉพาะสำเนาแบบเบา (ตัดรูป base64 ออก) กัน localStorage เต็ม (~5MB)
+  // ข้อมูลจริงเก็บใน data.json ผ่านปุ่ม Export อยู่แล้ว
+  try{
+    localStorage.removeItem('safetyData');
+    localStorage.setItem('safetyData', JSON.stringify(data,function(k,v){
+      return (typeof v==='string' && v.indexOf('data:')===0) ? '' : v;
+    }));
+  }catch(e){
+    try{ localStorage.removeItem('safetyData'); }catch(_){}
+    console.warn('autoSave skipped:',e.message);
+  }
 }
 
 function fbSaveNews(){ autoSave(); }
-function fbSaveCalData(){ localStorage.setItem('calData',JSON.stringify(calData)); autoSave(); }
+function fbSaveCalData(){ try{localStorage.setItem('calData',JSON.stringify(calData));}catch(e){} autoSave(); }
 function fbSaveSettings(){ autoSave(); }
 
 // ─── AUTO PUSH to GitHub ───
