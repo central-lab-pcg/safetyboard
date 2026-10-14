@@ -1564,7 +1564,11 @@ async function loadFileSingle(inp,tid,key){
   fileStore[key].unshift({url,name:f.name,ts,isImg});
   autoSave();
   renderFileSection(tid,key);
+  autoPushFiles(key);
+  inp.value='';
 }
+// NCR: อัปโหลด/ลบแล้วส่งขึ้น data.json (GitHub) ทันที ไม่ต้องกด Export
+function autoPushFiles(key){ if(key==='ncr' && adminOn) exportData(); }
 function renderFileSection(tid,key){
   const files=fileStore[key]||[];
   const frame=document.getElementById(tid);
@@ -1606,14 +1610,18 @@ function deleteFileCurrent(tid,key){
   if(!confirm('ลบไฟล์ปัจจุบันออก?')) return;
   fileStore[key].shift();
   db.collection('settings').doc('files_'+key).set({items:fileStore[key].map(f=>({url:f.url,name:f.name,ts:f.ts}))});
+  autoSave();
   renderFileSection(tid,key);
+  autoPushFiles(key);
 }
 function deleteFileOld(tid,key,idx){
   if(!adminOn) return;
   if(!confirm('ลบไฟล์นี้ออก?')) return;
   fileStore[key].splice(idx,1);
   db.collection('settings').doc('files_'+key).set({items:fileStore[key].map(f=>({url:f.url,name:f.name,ts:f.ts}))});
+  autoSave();
   renderFileSection(tid,key);
+  autoPushFiles(key);
 }
 function viewOldFile(key,idx){
   const f=fileStore[key][idx]; if(!f) return;
