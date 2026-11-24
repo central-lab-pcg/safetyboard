@@ -484,20 +484,17 @@ body{font-family:'IBM Plex Sans Thai',Sarabun,Arial,sans-serif;background:var(--
 
 <!-- ══ แผนงาน ══ -->
 <div class="sec" id="tab-plan">
+  <div id="uplan" class="usec">
+    <div class="utitle">📤 Admin — อัปโหลดแผนงาน</div>
+    <label class="ubox" style="display:inline-block;cursor:pointer;max-width:180px">
+      <div class="uico">📅</div><div class="uname">เลือกไฟล์รูปภาพ</div>
+      <input type="file" accept="image/*" onchange="loadFileSingle(this,'planframe','plan')">
+    </label>
+  </div>
   <div class="card"><div class="ctitle"><span class="cbar"></span>แผนงานด้านความปลอดภัย</div>
-    <div class="lgrid" style="margin-bottom:14px;">
-      <a class="lcard" href="https://storage2.me-qr.com/pdf/879453ab-fd44-4ed4-a82d-e4b094848a22.pdf" target="_blank" rel="noopener" onclick="return openPlanPdf(event)">
-        <div class="lic lig">📄</div><div><div class="lname">แผนงาน (PDF)</div></div><span class="lbdg lpdf">PDF</span></a>
-      <a class="lcard" href="https://view.officeapps.live.com/op/view.aspx?src=https%3A%2F%2Fstorage2.me-qr.com%2Fexcel%2F9d00e368-878b-45e8-84c4-e7f45605d600.xlsx" target="_blank" rel="noopener">
-        <div class="lic lig">📊</div><div><div class="lname">แผนงาน (Excel)</div></div><span class="lbdg lbg">Excel</span></a>
-    </div>
-    <!-- iframe: แสดงเฉพาะ desktop/iOS — Android ซ่อนและแสดงปุ่มแทน -->
-    <div id="plan-iframe-wrap">
-      <div class="ifrwrap"><div class="ifrbar"><div class="idot" style="background:#ff5f57"></div><div class="idot" style="background:#febc2e"></div><div class="idot" style="background:#28c840"></div><span style="margin-left:6px;">Safety Work Plan 2569</span></div>
-        <div id="plan-pdf-slot"></div><script>document.getElementById("plan-pdf-slot").innerHTML=pdfEmbed("https://storage2.me-qr.com/pdf/879453ab-fd44-4ed4-a82d-e4b094848a22.pdf","แผนงาน PDF","480px");</script>
-      </div>
-    </div>
-    </div>
+    <div id="planframe"><div class="ph"><div class="phic">📅</div><div class="phtit">รอไฟล์แผนงาน</div></div></div>
+    <div id="plan-history" style="margin-top:10px"></div>
+  </div>
 </div>
 
 
@@ -735,6 +732,7 @@ body{font-family:'IBM Plex Sans Thai',Sarabun,Arial,sans-serif;background:var(--
       <div class="ubox" onclick="document.getElementById('uu-audit').click()"><div class="uico">🔍</div><div class="uname">ผลตรวจประเมิน</div><div class="udesc">รูปภาพผลตรวจ</div><input id="uu-audit" type="file" accept="image/*" onchange="loadFileSingle(this,'auditframe','audit');setst('st-audit',this)"><div class="ust" id="st-audit"></div></div>
       <div class="ubox" onclick="document.getElementById('uu-ncr').click()"><div class="uico">⚠️</div><div class="uname">รายงาน NCR</div><div class="udesc">รูปภาพ NCR</div><input id="uu-ncr" type="file" accept="image/*" onchange="loadFileSingle(this,'ncrframe','ncr');setst('st-ncr',this)"><div class="ust" id="st-ncr"></div></div>
       <div class="ubox" onclick="document.getElementById('uu-kaizen').click()"><div class="uico">💡</div><div class="uname">Kaizen</div><div class="udesc">รูปภาพ Kaizen</div><input id="uu-kaizen" type="file" accept="image/*" onchange="loadFileSingle(this,'kaizenframe','kaizen');setst('st-kaizen',this)"><div class="ust" id="st-kaizen"></div></div>
+      <div class="ubox" onclick="document.getElementById('uu-plan').click()"><div class="uico">📅</div><div class="uname">แผนงาน</div><div class="udesc">รูปภาพแผนงาน</div><input id="uu-plan" type="file" accept="image/*" onchange="loadFileSingle(this,'planframe','plan');setst('st-plan',this)"><div class="ust" id="st-plan"></div></div>
       <div class="ubox" onclick="document.getElementById('uu-culture').click()"><div class="uico">🏅</div><div class="uname">วัฒนธรรม PCG</div><div class="udesc">รูปภาพวัฒนธรรม</div><input id="uu-culture" type="file" accept="image/*" onchange="loadFileSingle(this,'cultureframe','culture');setst('st-culture',this)"><div class="ust" id="st-culture"></div></div>
     </div>
   </div>
@@ -1055,7 +1053,7 @@ async function loadFromFirebase(){
       renderSS(); renderMini(); renderKyt(); renderHero(); buildCal();
       buildKytCalTabs(); buildKytCalGrid();
       updateStartDisplay(); calcDays();
-      ['kpi','cpo','nurse','audit','ncr','kaizen','culture'].forEach(k=>{
+      ['kpi','cpo','nurse','audit','ncr','kaizen','culture','plan'].forEach(k=>{
         if(fileStore[k]&&fileStore[k].length) renderFileSection(k+'frame',k);
       });
     }
@@ -1125,7 +1123,7 @@ function toggleAdmin(){
     const esb=document.getElementById('editstart-btn'); if(esb) esb.style.display='none';
     const exb=document.getElementById('export-btn'); if(exb) exb.style.display='none';
     renderMini(); renderHero(); renderKyt(); renderSS();
-    ['kpi','cpo','nurse','audit','ncr','kaizen','culture'].forEach(k=>{if(fileStore[k]&&fileStore[k].length)renderFileSection(k+'frame',k);});
+    ['kpi','cpo','nurse','audit','ncr','kaizen','culture','plan'].forEach(k=>{if(fileStore[k]&&fileStore[k].length)renderFileSection(k+'frame',k);});
   } else {
     // show login modal
     document.getElementById('login-pass').value='';
@@ -1147,7 +1145,7 @@ function doLogin(){
     const exb=document.getElementById('export-btn'); if(exb) exb.style.display='inline-block';
     closeModal('mlogin');
     renderMini(); renderHero(); renderKyt(); renderSS();
-    ['kpi','cpo','nurse','audit','ncr','kaizen','culture'].forEach(k=>{if(fileStore[k]&&fileStore[k].length)renderFileSection(k+'frame',k);});
+    ['kpi','cpo','nurse','audit','ncr','kaizen','culture','plan'].forEach(k=>{if(fileStore[k]&&fileStore[k].length)renderFileSection(k+'frame',k);});
   } else {
     document.getElementById('login-err').style.display='block';
     document.getElementById('login-pass').value='';
@@ -1596,7 +1594,7 @@ async function loadFileSingle(inp,tid,key){
 // NCR: อัปโหลด/ลบแล้วส่งขึ้น data.json (GitHub) ทันที ไม่ต้องกด Export
 function autoPushFiles(key){ if(key==='ncr' && adminOn) exportData(); }
 function renderFileSection(tid,key){
-  if(key==='kaizen'||key==='ncr') return renderCarousel(tid,key);
+  if(key==='kaizen'||key==='ncr'||key==='plan') return renderCarousel(tid,key);
   const files=fileStore[key]||[];
   const frame=document.getElementById(tid);
   const hist=document.getElementById(key+'-history');
@@ -1642,7 +1640,7 @@ function renderCarousel(tid,key){
   clearInterval(carTimer[key]);
   if(!frame) return;
   if(!files.length){
-    const ph={kaizen:['💡','รอไฟล์ Kaizen'],ncr:['⚠️','รอไฟล์รายงานผิดปกติ']}[key]||['🖼','รอไฟล์รูปภาพ'];
+    const ph={kaizen:['💡','รอไฟล์ Kaizen'],ncr:['⚠️','รอไฟล์รายงานผิดปกติ'],plan:['📅','รอไฟล์แผนงาน']}[key]||['🖼','รอไฟล์รูปภาพ'];
     frame.innerHTML=`<div class="ph"><div class="phic">${ph[0]}</div><div class="phtit">${ph[1]}</div></div>`;
     return;
   }
