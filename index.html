@@ -289,6 +289,20 @@ body{font-family:'IBM Plex Sans Thai',Sarabun,Arial,sans-serif;background:var(--
   .nav{padding-bottom:env(safe-area-inset-bottom)}
 }
 </style>
+<style>
+.car{border:1px solid var(--brd);border-radius:10px;overflow:hidden;background:#fff}
+.car .ifrbar{border-radius:0}
+.car-view{position:relative;overflow:hidden;background:#f4f6f5}
+.car-track{display:flex;transition:transform .45s ease}
+.car-slide{flex:0 0 100%;min-width:100%;display:flex;align-items:center;justify-content:center}
+.car-slide img{width:100%;max-height:78vh;object-fit:contain;display:block;cursor:zoom-in}
+.car-btn{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;border:none;background:rgba(0,0,0,.45);color:#fff;font-size:26px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .2s}
+.car-btn:hover{background:rgba(0,0,0,.7)}
+.car-prev{left:10px}.car-next{right:10px}
+.car-dots{display:flex;justify-content:center;gap:7px;padding:10px 0;flex-wrap:wrap}
+.car-dot{width:9px;height:9px;border-radius:50%;background:#cfd8d3;cursor:pointer;transition:all .2s}
+.car-dot.on{background:var(--green);width:22px;border-radius:5px}
+</style>
 </head>
 <body>
 
@@ -1582,6 +1596,7 @@ async function loadFileSingle(inp,tid,key){
 // NCR: อัปโหลด/ลบแล้วส่งขึ้น data.json (GitHub) ทันที ไม่ต้องกด Export
 function autoPushFiles(key){ if(key==='ncr' && adminOn) exportData(); }
 function renderFileSection(tid,key){
+  if(key==='kaizen'||key==='ncr') return renderCarousel(tid,key);
   const files=fileStore[key]||[];
   const frame=document.getElementById(tid);
   const hist=document.getElementById(key+'-history');
@@ -1616,6 +1631,83 @@ function renderFileSection(tid,key){
         ${adminOn?`<button onclick="event.stopPropagation();deleteFileOld('${tid}','${key}',${i+1})" style="background:#c0392b;border:none;color:#fff;width:20px;height:20px;border-radius:50%;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">×</button>`:''}
       </div>`).join('');
   } else if(hist){ hist.innerHTML=''; }
+}
+// ─── Kaizen Carousel / Slider ───
+const carIdx={},carTimer={};
+function renderCarousel(tid,key){
+  const files=fileStore[key]||[];
+  const frame=document.getElementById(tid);
+  const hist=document.getElementById(key+'-history');
+  if(hist) hist.innerHTML='';
+  clearInterval(carTimer[key]);
+  if(!frame) return;
+  if(!files.length){
+    const ph={kaizen:['💡','รอไฟล์ Kaizen'],ncr:['⚠️','รอไฟล์รายงานผิดปกติ']}[key]||['🖼','รอไฟล์รูปภาพ'];
+    frame.innerHTML=`<div class="ph"><div class="phic">${ph[0]}</div><div class="phtit">${ph[1]}</div></div>`;
+    return;
+  }
+  if(carIdx[key]==null||carIdx[key]>=files.length) carIdx[key]=0;
+  const isImgF=f=>f.isImg||(f.url&&f.url.startsWith('data:image'));
+  const slides=files.map((f,i)=>`<div class="car-slide">${isImgF(f)
+      ?`<img src="${f.url}" alt="${f.name}" loading="lazy" onclick="carZoom('${key}',${i})">`
+      :pdfEmbed(f.url,f.name,"500px")}</div>`).join('');
+  const multi=files.length>1;
+  frame.innerHTML=`<div class="car" id="car-${key}">
+    <div class="ifrbar"><div class="idot" style="background:#ff5f57"></div><div class="idot" style="background:#febc2e"></div><div class="idot" style="background:#28c840"></div>
+      <span id="car-cap-${key}" style="margin-left:6px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+      ${adminOn?`<button onclick="carDelete('${tid}','${key}')" style="margin-left:6px;background:#c0392b;border:none;color:#fff;padding:4px 10px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🗑 ลบ</button>`:''}
+    </div>
+    <div class="car-view"><div class="car-track" id="car-track-${key}">${slides}</div>
+      ${multi?`<button class="car-btn car-prev" onclick="carGo('${key}',-1,true)" aria-label="ก่อนหน้า">‹</button>
+      <button class="car-btn car-next" onclick="carGo('${key}',1,true)" aria-label="ถัดไป">›</button>`:''}
+    </div>
+    ${multi?`<div class="car-dots">${files.map((_,i)=>`<span class="car-dot" onclick="carTo('${key}',${i},true)"></span>`).join('')}</div>`:''}
+  </div>`;
+  const view=frame.querySelector('.car-view');
+  if(multi){
+    let x0=null;
+    view.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;},{passive:true});
+    view.addEventListener('touchend',e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;if(Math.abs(dx)>40)carGo(key,dx<0?1:-1,true);x0=null;});
+    view.addEventListener('mouseenter',()=>clearInterval(carTimer[key]));
+    view.addEventListener('mouseleave',()=>carAuto(key));
+    carAuto(key);
+  }
+  carTo(key,carIdx[key]);
+}
+function carTo(key,i,user){
+  const files=fileStore[key]||[]; if(!files.length) return;
+  i=(i+files.length)%files.length; carIdx[key]=i;
+  const tr=document.getElementById('car-track-'+key);
+  if(tr) tr.style.transform=`translateX(-${i*100}%)`;
+  const root=document.getElementById('car-'+key);
+  if(root) root.querySelectorAll('.car-dot').forEach((d,j)=>d.classList.toggle('on',j===i));
+  const cap=document.getElementById('car-cap-'+key);
+  const f=files[i];
+  if(cap) cap.innerHTML=`${files.length>1?`<b>${i+1}/${files.length}</b> · `:''}${f.name} <span style="font-size:10px;opacity:.7">${f.ts||''}</span>`;
+  if(user) carAuto(key);
+}
+function carGo(key,d,user){carTo(key,(carIdx[key]||0)+d,user);}
+function carAuto(key){
+  clearInterval(carTimer[key]);
+  if((fileStore[key]||[]).length>1) carTimer[key]=setInterval(()=>carGo(key,1),6000);
+}
+function carZoom(key,i){
+  const f=(fileStore[key]||[])[i]; if(!f) return;
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out';
+  ov.innerHTML=`<img src="${f.url}" style="max-width:96vw;max-height:96vh;object-fit:contain;border-radius:8px">`;
+  ov.onclick=()=>document.body.removeChild(ov);
+  document.body.appendChild(ov);
+}
+function carDelete(tid,key){
+  if(!adminOn||!fileStore[key]||!fileStore[key].length) return;
+  const i=carIdx[key]||0, f=fileStore[key][i];
+  if(!confirm('ลบไฟล์ "'+f.name+'" ออก?')) return;
+  fileStore[key].splice(i,1);
+  db.collection('settings').doc('files_'+key).set({items:fileStore[key].map(f=>({url:f.url,name:f.name,ts:f.ts}))});
+  autoSave();
+  renderCarousel(tid,key);
+  autoPushFiles(key);
 }
 function deleteFileCurrent(tid,key){
   if(!adminOn||!fileStore[key]||!fileStore[key].length) return;
